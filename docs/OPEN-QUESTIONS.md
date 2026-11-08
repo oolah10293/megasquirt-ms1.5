@@ -25,7 +25,8 @@
 
 ## Physical specifics (confirm only what code/schematics cannot establish)
 
-- [ ] MS1 PCB revision and any non-stock output/driver wiring.
+- [x] Confirm mainboard revision: physical photo shows **MegaSquirt V3.0 MB** and socketed MS1 processor, **no daughtercard**. See [board photo review](BOARD-PHOTO-2026-11-08.md).
+- [ ] Trace non-stock proto-area driver/output wiring (two unidentified small devices, two resistors, red/white leads), including the one fan output.
 - [ ] Available tach/RPM signal from ignition equipment (MS1 ignition-output control is not needed).
 - [ ] Target GM 4.3 TBI injectors' impedance; confirm existing resistor value/wattage and intended use.
 - [ ] GM stepper IAC pinout, coil impedance/current, compatible driver topology.
