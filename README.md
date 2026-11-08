@@ -2,7 +2,7 @@
 
 Modernizing an existing **MegaSquirt MS1** to run a **GM 4.3L V6 with throttle-body injection (TBI)**, focusing on better idle control, useful wideband O₂ feedback, and a better tuning experience.
 
-**Status:** Requirements captured; engineering investigation not completed. No firmware has been written, compiled, flashed, or released for this project.
+**Status:** Requirements recorded and **initial MS1/Extra 029y4a source audit completed** using the owner's uploaded firmware ZIP. Board-specific I/O, stepper-driver feasibility, processor headroom, and installed ECU firmware remain **unverified**. No project firmware has been written, compiled, flashed, or released.
 
 ## Confirmed project requirements
 
@@ -28,7 +28,7 @@ These items come directly from the project owner's discussion on November 8, 202
 5. Preserve one cooling-fan control output and the injection functions.
 6. Retain reliable fuel-control timing as the highest priority.
 
-These features require a source-code, I/O, timing, flash/RAM, and electrical feasibility audit before the design is considered settled.
+**Source-audit update (2026-11-08):** MS1/Extra 029y4a **already implements** fan control with separate on/off coolant thresholds, two 8×8 AFR-target tables with EGO fuel correction, and PWM closed-loop idle targeting with warm-up, dashpot and recovery. The missing major feature is **stepper-actuator output/control**, not the entirety of idle or AFR logic. These findings apply to the uploaded historical firmware, **not yet to the unknown firmware installed in the physical ECU**. Real-time timing, flash/RAM, and board I/O feasibility remain unverified.
 
 ## Architecture preference
 
@@ -49,6 +49,8 @@ The diagram is **conceptual**. Output assignments, driver interface, and signal 
 
 - [Requirements and design decisions](docs/PROJECT-SPEC.md)
 - [Research status and verification needs](docs/RESEARCH-NOTES.md)
+- [Verified MS1/Extra 029y4a source audit with line references](docs/SOURCE-AUDIT-029Y4A.md)
+- [Scope warning for uploaded MS3/V3.0 hardware manual](docs/HARDWARE-MANUAL-SCOPE.md)
 - [Open questions / investigation checklist](docs/OPEN-QUESTIONS.md)
 
 ## Engineering ground rules
