@@ -27,7 +27,7 @@
 
 ### Stepper idle air control
 
-- Put target-idle and correction logic in MS1 firmware.
+- **Source-confirmed:** 029y4a already contains closed-loop *PWM* target-idle/warmup/dashpot/recovery logic. Reuse/adapt it where practical; stepper actuation and position tracking still need design. See [source audit](SOURCE-AUDIT-029Y4A.md).
 - Prefer a driver with a simple command interface (e.g. STEP/DIR), **if** its electrical and logical compatibility with the target IAC is confirmed.
 - Candidate behaviors: startup homing/reference, coolant-based cranking/warmup positions, target-RPM feedback, dashpot on throttle closing, recovery under electrical/load changes, movement limits and fault handling.
 - Do **not** assume unused spark outputs can simply be reassigned without inspecting the actual board routing and firmware.
@@ -37,12 +37,12 @@
 
 - Use a real wideband sensor **and its matching sensor controller**.
 - Determine the controller's output calibration before writing an AFR-conversion table.
-- Target AFR by engine speed and load, with correction limits, sensible activation conditions, timeouts and datalogging.
-- Inspect existing MS1/Extra implementations first; retain proven code where possible.
+- **Source-confirmed:** 029y4a already has two 8x8 AFR-target tables and bounded stepwise EGO correction; retain/validate before adding or replacing logic.
+- Confirm wideband controller scaling and polarity; improve sensor-valid handling, feedback response, correction bounds and diagnostics only as justified by source review.
 
 ### Auxiliary control
 
-- Allocate exactly one fan output.
+- Allocate exactly one fan output. **Source-confirmed:** 029y4a already supports X2/PTA5 or LED18/PTC2 fan control, subject to physical board wiring.
 - Existing fan-output modification(s), if any, must be mapped before choosing IAC pins.
 - Spark outputs and routines are candidates for reuse only after verification.
 
@@ -50,9 +50,15 @@
 
 - Prefer compatibility with existing MegaSquirt tuning software/protocols where feasible.
 - Expose important internal variables: commanded AFR, measured AFR, closed-loop correction, IAC target, actual command/step count, RPM target/error, fan state and relevant faults.
-- Do not promise specific table size, logging bandwidth or new protocol until storage and serial capabilities are audited.
+- **Source-confirmed:** 029y4a has 12x12 VE tables, two 8x8 AFR target tables, and a bundled tuning INI. Preserve compatibility where possible; do not promise larger tables, logging bandwidth, or new protocol until resource limits are audited.
 
-## 3. Explicitly unverified details
+## 3. Source-inspection status and remaining unknowns
+
+- **Directly inspected on 2026-11-08:** owner-provided MS1/Extra 029y4a assembly/header/INI and an MS3/V3.0 hardware manual. See [firmware audit](SOURCE-AUDIT-029Y4A.md) and [manual scope](HARDWARE-MANUAL-SCOPE.md).
+- MS3 hardware guide is not MS1-specific; don't use its MS3 CPU output map to design MS1 IAC circuits.
+- Neither a firmware build nor physical I/O validation was performed.
+
+### Explicitly unverified details
 
 - MS1 board PCB revision and CPU/daughtercard details.
 - Installed firmware and its exact source/version.
@@ -75,6 +81,7 @@
 | 2026-11-08 | One fan output | Owner specified |
 | 2026-11-08 | Add wideband AFR control and improve tuning | Owner specified |
 | 2026-11-08 | Research/documentation is permitted; builds require separate explicit go-ahead | Standing project instruction |
+| 2026-11-08 | Inspect uploaded MS1/Extra 029y4a source and record existing idle, fan and AFR features | Verified directly from supplied firmware archive; see source audit |
 
 ## 5. Design priorities
 
