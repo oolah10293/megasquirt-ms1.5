@@ -26,7 +26,8 @@
 ## Physical specifics (confirm only what code/schematics cannot establish)
 
 - [x] Confirm mainboard revision: physical photo shows **MegaSquirt V3.0 MB** and socketed MS1 processor, **no daughtercard**. See [board photo review](BOARD-PHOTO-2026-11-08.md).
-- [ ] Trace non-stock proto-area driver/output wiring (two unidentified small devices, two resistors, red/white leads), including the one fan output.
+- [x] Owner confirms the **two custom output circuits connect to JS2 and JS3**; underside photograph supplied (see [board photo review](BOARD-PHOTO-2026-11-08.md)).
+- [ ] Identify the **CPU/control source**, driver circuitry and external load/connector destination of each JS2/JS3 custom output; determine which one is used for the single required fan, if either.
 - [ ] Available tach/RPM signal from ignition equipment (MS1 ignition-output control is not needed).
 - [ ] Target GM 4.3 TBI injectors' impedance; confirm existing resistor value/wattage and intended use.
 - [ ] GM stepper IAC pinout, coil impedance/current, compatible driver topology.
