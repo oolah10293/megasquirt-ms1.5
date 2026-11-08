@@ -52,6 +52,7 @@ The diagram is **conceptual**. Output assignments, driver interface, and signal 
 - [Verified MS1/Extra 029y4a source audit with line references](docs/SOURCE-AUDIT-029Y4A.md)
 - [Stepper IAC timing and memory feasibility plan](docs/STEPPER-FEASIBILITY-PLAN.md)
 - [Scope warning for uploaded MS3/V3.0 hardware manual](docs/HARDWARE-MANUAL-SCOPE.md)
+- [Actual MS1 V3.0 board photo identification](docs/BOARD-PHOTO-2026-11-08.md)
 - [Open questions / investigation checklist](docs/OPEN-QUESTIONS.md)
 
 ## Engineering ground rules
