@@ -2,11 +2,23 @@
 
 **Updated 2026-11-08 after direct firmware source inspection.** Completed checks below are evidenced in [SOURCE-AUDIT-029Y4A.md](SOURCE-AUDIT-029Y4A.md).
 
+## TunerStudio offline GUI smoke test — 2026-11-09
+
+- [x] Owner loaded the custom INI in **TunerStudio MS Lite 3.3.01** and opened the **MegaSquirt MS1.5** project; dashboard displayed **Not Connected** and custom JS0/JS1/JS2/JS3 labels.
+- [x] **MS1.5 Stepper IAC** and **MS1.5 Fan Relay (JS2 / PTA3)** dialogs opened and rendered their intended sections/controls.
+- [ ] **Calibration values are NOT valid yet:** IAC values appeared in the millions; fan showed -40.0 °F ON and ~7,483,688 °F OFF. Owner recalled a no-tune-loaded warning; whether lack of offline calibration or an INI bug caused these numbers is **unverified**.
+- [ ] Load a known-compatible offline calibration/tune (if available), reopen dialogs, verify display decoding of page-9 fields and fan temperatures; capture precise warnings. If still wrong, inspect INI formats, scalar types, offsets and project defaults.
+- [ ] Remove obsolete UI/status remnants (e.g., Launch On, NOS/Tables On, spark gauge) as a separate noncritical cleanup.
+- [ ] No serial communication/read/write, physical ECU connection, burn, or on-engine test has been verified; **do not flash current test image**.
+
+See [observations and limits](TUNERSTUDIO-OFFLINE-UI-2026-11-09.md).
+
 ## TunerStudio tuning-integrated test assembly — 2026-11-09
 
 - [x] CASM08Z assembled matching new MS1.5 firmware without errors; calibration defaults at `E871–E875` and unique signature verified in S19.
 - [x] Verified previous original source baseline byte-for-byte; protected pages and bootloader unchanged, vector relocation valid, main code ends `DBEF`.
-- [ ] TunerStudio GUI/project file and serial tuning read-write tests still outstanding; never assume static INI checks prove a functioning GUI.
+- [x] Initial TunerStudio **project and two-dialog rendering** smoke test passed offline; see [UI observations](TUNERSTUDIO-OFFLINE-UI-2026-11-09.md).
+- [ ] **Actual calibration values, project save/load round-trip, remaining dialogs, and serial read-write** still need validation; don't confuse GUI rendering with ECU compatibility.
 - [ ] Bench RPM/injector timing and motor/relay electrical protection; **do not flash or use current test image on vehicle**.
 
 ## Historical tuning source draft — 2026-11-09
@@ -15,7 +27,8 @@
 - [x] Draft new page-9 IAC motor parameters: low interval, startup homing count and maximum step travel; source/INI offsets 113..117 verified free.
 - [x] Preserve idle algorithm tuning, redefine old PWM `idlefreq` byte as current source's demand cap, and relabel position/idle-control fields. Separate fan JS2 dialog and hide conflicting old output menus.
 - [x] CRLF INI/source addendum patch dry-run checks completed against original 029y4a; static offset checks passed.
-- [ ] Verify the INI actually loads and renders properly in TunerStudio. Check old-tune migration and hidden legacy feature bits.
+- [x] INI loaded and the IAC and fan dialogs rendered in TunerStudio MS Lite; see [offline GUI observations](TUNERSTUDIO-OFFLINE-UI-2026-11-09.md).
+- [ ] Diagnose nonsensical offline calibration values; test old-tune migration and hidden legacy feature bits.
 - [x] Owner separately authorized **the tuned test build**, which passed using CASM08Z (signature, CAL page and flash checks). **Runtime timing remains untested.** See [tuning build report](TEST-BUILD-TUNING-2026-11-09.md).
 
 See [the source-only tuning record](TUNERSTUDIO-WIP-2026-11-09.md).
