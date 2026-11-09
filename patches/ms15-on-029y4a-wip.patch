@@ -1,0 +1,186 @@
+--- a/src/msns-extra.asm
++++ b/src/msns-extra.asm
+@@ -690,0 +691 @@
++	include "ms15_defs.inc"
+@@ -984,2 +985,2 @@
+-        bclr     water,porta		;water injection
+-        bclr     water2,porta           ;2nd water injection output
++        ; MS15 reserved I/O: removed bclr water,porta		;water injection
++        ; MS15 reserved I/O: removed bclr water2,porta           ;2nd water injection output
+@@ -1096,0 +1098,10 @@
++; MS1.5 prototype: reset stepper FSM. Values in ms15_defs.inc are
++; BENCH PLACEHOLDERS and must be calibrated for the real valve.
++        clr     MS15_POS_L
++        clr     MS15_POS_H
++        clr     MS15_TARGET_L
++        clr     MS15_TARGET_H
++        mov     #MS15_HOME_L_INIT,MS15_HOME_L
++        mov     #MS15_HOME_H_INIT,MS15_HOME_H
++        mov     #MS15_BOOT_DELAY,MS15_WAIT
++        mov     #$01,MS15_STATE     ; HOME=1, STEP=0, DIR=closing
+@@ -2978 +2989 @@
+-        brset   water,porta,SKIP_ALL_O2	; if water injection on
++        ; MS15: JS0 is STEP; no water-injection EGO gating
+@@ -4699 +4710 @@
+-                bclr    Output1,porta
++                ; MS15 reserved I/O: removed bclr Output1,porta
+@@ -4708 +4719 @@
+-                bset    Output1,porta	; Below limit, set output (Inverted)
++                ; MS15 reserved I/O: removed bset Output1,porta	; Below limit, set output (Inverted)
+@@ -4977,9 +4988,3 @@
+-        brset   X2_FAN,outputpins,DO_FAN_Check	; Are we using X2 as fan
+-						; control?
+-        brset   REUSE_LED18,outputpins,fan_exit
+-        brclr   REUSE_LED18_2,outputpins,fan_exit
+-        brset   LED18_FAN,outputpins,DO_FAN_Check	; Are we using LED18
+-					; as fan control?
+-fan_exit:
+-        bra     FAN_DONE		; Nope, so return
+-
++        ; MS1.5: SINGLE fan on existing JS2/PTA3/Output1 transistor.
++        ; This intentionally ignores original X2_FAN and LED18 flags.
++        ; Keep original coolant hysteresis and crank-off policy.
+@@ -4994 +4998,0 @@
+-
+@@ -4996,5 +5000 @@
+-        brclr   X2_FAN,outputpins,No_FAN_Porta	; Are we using X2?
+-        bclr    water,porta		; sharing X2 with water inj output
+-No_FAN_Porta:
+-        brclr   LED18_FAN,outputpins,FAN_DONE	; Are we using LED18?
+-        bclr    wled,portc
++        bclr    output1,porta
+@@ -5003,6 +5003 @@
+-        brclr   X2_FAN,outputpins,No_FANOn_Porta	; Are we using X2?
+-        bset    water,porta		; sharing X2 with water inj output
+-No_FANOn_Porta:
+-        brclr   LED18_FAN,outputpins,FAN_DONE	; Are we using LED18?
+-        bset    wled,portc
+-
++        bset    output1,porta
+@@ -5072 +5067 @@
+-            brset  water,porta,ignore_iat;If water on then dont check
++            ; MS15: no water-injection water-output state read
+@@ -5094 +5089 @@
+-          bset  water,porta		;Turn water pump on
++          ; MS15 reserved I/O: removed bset water,porta		;Turn water pump on
+@@ -5099 +5094 @@
+-           bclr   water,porta		;Turn off water pump
++           ; MS15 reserved I/O: removed bclr water,porta		;Turn off water pump
+@@ -6085 +6080 @@
+-        jmp    CalcRunningParameters                   ; Start main loop again
++        jmp    MS15_IAC_SERVICE       ; tail jump; no additional JSR stack                   ; Start main loop again
+@@ -9274 +9269 @@
+-        brset    water,porta,inject_water	; If water needed go to
++        ; MS15: no water-triggered second injection
+@@ -9280 +9275 @@
+-       bset   water2,porta		; Turn water injector on with
++       ; MS15 reserved I/O: removed bset water2,porta		; Turn water injector on with
+@@ -9356 +9351 @@
+-        bclr     water2,porta		; Turn off water injection pulse
++        ; MS15 reserved I/O: removed bclr water2,porta		; Turn off water injection pulse
+@@ -9368,8 +9363,2 @@
+-        brset    REUSE_FIDLE,outputpins,idleActDone
+-
+-*****************************************************************************
+-** Idle Control PWM Actuator
+-**
+-** Runs at 10000/100 = 100 Hz.  Must be before RPM check.
+-*****************************************************************************
+-
++; MS1.5 stepper replaces PWM-on-FIDLE. Idle demand is still computed
++; as idleDC. This frees idleActClock for the stepper FSM.
+@@ -9377,29 +9366 @@
+-        brset    crank,engine,idleActOn	; if cranking then keep it
+-					; shut (rmd changed from off to on)
+-        brclr    running,engine,idleActOff	; if not running then close it
+-        lda      feature13_f 	; skip if on/off mode
+-        bit      #pwmidleb
+-        beq      idleActCheck
+-
+-        inc      idleActClock		; Adjust idle PWM count
+-        lda      idleActClock
+-        cmp      idlefreq_f
+-        bne      idleActCheck
+-        clr      idleActClock
+-
+-idleActCheck:
+-        lda      idleDC
+-        cmp      #0T
+-        beq      idleActOff
+-        cmp      idlefreq_f  ; #255T KG
+-        beq      idleActOn
+-        cmp      idleActClock
+-        bls      idleActOff
+-
+-idleActOn:
+-        bset     iasc,porta
+-        bra      idleActDone
+-
+-idleActOff:
+-        bclr     iasc,porta
+-
++        bclr    iasc,porta
+@@ -9419,29 +9380 @@
+-        brclr  BoostControl,feature2,doneBoostControl
+-doBoostControl:
+-        lda     bcDC
+-        beq     boostOff		; Turn it off, if duty cycle is zero.
+-        cmp     bcActClock
+-        blo     boostOff
+-
+-boostOn:
+-        lda     feature6_f
+-        bit     #BoostDirb
+-        bne     bcClrout
+-;        brset   BoostDir,feature6,bcClrout	; Change dir for high
+-					; pulsewidth reduce boost
+-        bra     bcSetout
+-boostOff:
+-        lda     feature6_f
+-        bit     #BoostDirb
+-        bne     bcSetout
+-;        brset   BoostDir,feature6,bcClrout	; Change dir for high
+-					; pulsewidth reduce boost
+-        bra     bcClrout
+-
+-bcSetout:
+-        bset    boostP,porta
+-        bra     doneBoostControl
+-
+-bcClrout:
+-        bclr    boostP,porta
+-
++        ; MS1.5: boost PWM output disabled; JS2/PTA3 owns fan.
+@@ -9493 +9426 @@
+-        bclr     water,porta
++        ; MS15 reserved I/O: removed bclr water,porta
+@@ -9496 +9429 @@
+-        bclr     water2,porta
++        ; MS15 reserved I/O: removed bclr water2,porta
+@@ -9499 +9432 @@
+-        bclr     output1,porta
++        ; MS15 reserved I/O: removed bclr output1,porta
+@@ -9622,0 +9556 @@
++        bset     MS15_TICK,MS15_STATE ; publish tick only (short ISR work)
+@@ -10991 +10925 @@
+-        bset     water,porta
++        ; MS15 reserved I/O: removed bset water,porta
+@@ -10994 +10928 @@
+-        bset     water2,porta
++        ; MS15 reserved I/O: removed bset water2,porta
+@@ -10997 +10931 @@
+-        bset     output1,porta
++        ; MS15 reserved I/O: removed bset output1,porta
+@@ -13276 +13210 @@
+-         bset   water2,porta		; Turn Nos output on
++         ; MS15 reserved I/O: removed bset water2,porta		; Turn Nos output on
+@@ -13292 +13226 @@
+-         bclr   water2,porta		; Turn off the output as we've
++         ; MS15 reserved I/O: removed bclr water2,porta		; Turn off the output as we've
+@@ -13439 +13373 @@
+-         bclr     water2,porta		; Turn off the Nos output
++         ; MS15 reserved I/O: removed bclr water2,porta		; Turn off the Nos output
+@@ -13748,0 +13683,3 @@
++; MS1.5 code near main-code high-water mark; must verify address map
++; by an explicitly authorized future build. No original ROM image is modified.
++        include "ms15_iac.inc"
