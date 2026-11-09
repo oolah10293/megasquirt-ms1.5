@@ -2,6 +2,17 @@
 
 **Updated 2026-11-08 after direct firmware source inspection.** Completed checks below are evidenced in [SOURCE-AUDIT-029Y4A.md](SOURCE-AUDIT-029Y4A.md).
 
+## TunerStudio configuration source draft — 2026-11-09
+
+- [x] Custom 32-character firmware/INI matching signature and future test-version string drafted. **Requires a NEW build**; previously passing S19 has old signature.
+- [x] Draft new page-9 IAC motor parameters: low interval, startup homing count and maximum step travel; source/INI offsets 113..117 verified free.
+- [x] Preserve idle algorithm tuning, redefine old PWM `idlefreq` byte as current source's demand cap, and relabel position/idle-control fields. Separate fan JS2 dialog and hide conflicting old output menus.
+- [x] CRLF INI/source addendum patch dry-run checks completed against original 029y4a; static offset checks passed.
+- [ ] Verify the INI actually loads and renders properly in TunerStudio. Check old-tune migration and hidden legacy feature bits.
+- [ ] Obtain separate explicit authorization before **rebuilding** the revised source to test flash growth, signature, CAL pages and real-time behavior.
+
+See [the source-only tuning record](TUNERSTUDIO-WIP-2026-11-09.md).
+
 ## Windows test build completed — 2026-11-09
 
 - [x] **Original 029y4a baseline and MS1.5 source both assembled with CASM08Z v3.14, no errors.** See [test report](TEST-BUILD-2026-11-09.md).
@@ -90,4 +101,4 @@ The older discussion below includes superseded pin-allocation proposals; the [cu
 
 ## Immediate next engineering task
 
-**The actual unbuilt WIP assembly is now in GitHub** for JS0 STEP, JS1 DIR, JS2 fan and JS3 spare. The most important next tasks are a **source/INI compatibility and safety review**, valve-driver electrical calibration and, only after an explicit new **build authorization**, assembly/map inspection and oscilloscope testing. See [current source record](FIRMWARE-WIP-2026-11-08.md).
+**Current:** MS1.5 signature and TunerStudio tuning source draft is committed, but has **not** been reassembled, connected to TunerStudio, or bench-tested. Next review a representative tune, verify physical IAC/relay wiring, and request explicit new test-build authorization before compiling the changes. See [tuning draft](TUNERSTUDIO-WIP-2026-11-09.md).
