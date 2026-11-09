@@ -51,6 +51,7 @@ The diagram is **conceptual**. Output assignments, driver interface, and signal 
 - [WIP RAM alias map and temporary motor-travel constants](firmware/ms15_defs.inc)
 - [Unbuilt source integration patch for original 029y4a](patches/ms15-on-029y4a-wip.patch)
 - [Firmware implementation record, source-only checks and blockers](docs/FIRMWARE-WIP-2026-11-08.md)
+- [Repeatable non-building source checks](tools/check_ms15_source.py)
 
 ## Project documents
 
