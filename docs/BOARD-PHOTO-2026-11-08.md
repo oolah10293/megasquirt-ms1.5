@@ -30,6 +30,12 @@ The rear photograph and owner's clarification supersede the earlier request belo
 - The photo does not establish which 029-series firmware is actually installed or how the board is configured electrically.
 - **This is MS1 silicon on a V3.0 mainboard:** an MS3/V3.0 hardware manual has **shared-board relevance**, but its MS3-specific CPU port mappings, daughtercard IAC driver outputs, and integrated stepper support **do not transfer** to MS1.
 
+## Later owner decision — 2026-11-08
+
+The two 2N2222 + nominal 1 kΩ custom circuits are confirmed present and were previously unused. The owner now **prefers to keep one to control the cooling-fan relay and leave the other intact**, assuming other outputs suffice for IAC. The current **proposal** is JS2/PTA3 for fan and JS3/PTA2 as an untouched spare; **PTC0/LED17 and PTC1/LED19** are preferred IAC STEP/DIR candidates. Which custom stage becomes fan is not yet an owner-specified or electrically validated choice. This newer preference **supersedes the older IAC assignments stated below**.
+
+The native 029y4a firmware fan output is on X2/PTA5 or LED18/PTC2, so using JS2/PTA3 requires an explicit **firmware fan-output remap**, not just a tuning setting. Check relay coil current, transistor base drive and flyback protection first.
+
 ## Relevance to MS1.5 design
 
 1. The **V3.0 mainboard revision is now physically confirmed**. Obtain the MS1/V3.0-specific mainboard schematic for exact trace and connector mapping.
