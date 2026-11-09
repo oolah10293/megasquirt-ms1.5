@@ -6,8 +6,10 @@
 
 - [x] Owner loaded the custom INI in **TunerStudio MS Lite 3.3.01** and opened the **MegaSquirt MS1.5** project; dashboard displayed **Not Connected** and custom JS0/JS1/JS2/JS3 labels.
 - [x] **MS1.5 Stepper IAC** and **MS1.5 Fan Relay (JS2 / PTA3)** dialogs opened and rendered their intended sections/controls.
-- [ ] **Calibration values are NOT valid yet:** IAC values appeared in the millions; fan showed -40.0 °F ON and ~7,483,688 °F OFF. Owner recalled a no-tune-loaded warning; whether lack of offline calibration or an INI bug caused these numbers is **unverified**.
-- [ ] Load a known-compatible offline calibration/tune (if available), reopen dialogs, verify display decoding of page-9 fields and fan temperatures; capture precise warnings. If still wrong, inspect INI formats, scalar types, offsets and project defaults.
+- [x] **Offline calibration display restored:** after loading a test tune adapted from the original 029y4a `default-degF.msq`, the owner reported IAC **4 ms / 360 closing / 320 max opening** and fan **194°F ON / 145°F OFF**. All five match the expected offline test values. The initially absurd values occurred in a project with no tune loaded; this supports (but does not prove) missing calibration data as the cause.
+- [x] The owner closed/reopened TunerStudio and reported the same settings remained visible. The owner also confirmed a separate **Save Tune As → Open Tune (`.msq`)** round-trip succeeded with those settings intact. This was reported by the owner, not independently inspected from the saved file.
+- [ ] **Two AFR-unit mismatch warnings** appeared when importing the offline test tune: `afrBins1` and `afrBins2` expected **Volts** in the active narrowband-project configuration but contained **AFR** units in the MSQ. No unit conversion occurred. Select and verify appropriate wideband configuration and preserve tables safely before engine use.
+- [ ] Test other TunerStudio settings, protocol/ECU serial read-back and writing on a safe bench; offline GUI success alone does not validate firmware operation.
 - [ ] Remove obsolete UI/status remnants (e.g., Launch On, NOS/Tables On, spark gauge) as a separate noncritical cleanup.
 - [ ] No serial communication/read/write, physical ECU connection, burn, or on-engine test has been verified; **do not flash current test image**.
 
@@ -18,7 +20,8 @@ See [observations and limits](TUNERSTUDIO-OFFLINE-UI-2026-11-09.md).
 - [x] CASM08Z assembled matching new MS1.5 firmware without errors; calibration defaults at `E871–E875` and unique signature verified in S19.
 - [x] Verified previous original source baseline byte-for-byte; protected pages and bootloader unchanged, vector relocation valid, main code ends `DBEF`.
 - [x] Initial TunerStudio **project and two-dialog rendering** smoke test passed offline; see [UI observations](TUNERSTUDIO-OFFLINE-UI-2026-11-09.md).
-- [ ] **Actual calibration values, project save/load round-trip, remaining dialogs, and serial read-write** still need validation; don't confuse GUI rendering with ECU compatibility.
+- [x] **Selected offline calibration values and separate MSQ save/reopen round-trip** confirmed by owner report: 4, 360, 320, 194°F, 145°F.
+- [ ] **Remaining dialogs, AFR unit handling and actual ECU serial read/write** still require validation; don't confuse offline GUI results with ECU compatibility.
 - [ ] Bench RPM/injector timing and motor/relay electrical protection; **do not flash or use current test image on vehicle**.
 
 ## Historical tuning source draft — 2026-11-09
@@ -28,7 +31,8 @@ See [observations and limits](TUNERSTUDIO-OFFLINE-UI-2026-11-09.md).
 - [x] Preserve idle algorithm tuning, redefine old PWM `idlefreq` byte as current source's demand cap, and relabel position/idle-control fields. Separate fan JS2 dialog and hide conflicting old output menus.
 - [x] CRLF INI/source addendum patch dry-run checks completed against original 029y4a; static offset checks passed.
 - [x] INI loaded and the IAC and fan dialogs rendered in TunerStudio MS Lite; see [offline GUI observations](TUNERSTUDIO-OFFLINE-UI-2026-11-09.md).
-- [ ] Diagnose nonsensical offline calibration values; test old-tune migration and hidden legacy feature bits.
+- [x] Loading the adapted offline 029y4a test tune resolved the reported nonsense values for the five checked settings; separate tune file save/load also succeeded per owner.
+- [ ] Resolve the two AFR unit-mismatch warnings; test other existing-tune migration and hidden legacy feature bits.
 - [x] Owner separately authorized **the tuned test build**, which passed using CASM08Z (signature, CAL page and flash checks). **Runtime timing remains untested.** See [tuning build report](TEST-BUILD-TUNING-2026-11-09.md).
 
 See [the source-only tuning record](TUNERSTUDIO-WIP-2026-11-09.md).
