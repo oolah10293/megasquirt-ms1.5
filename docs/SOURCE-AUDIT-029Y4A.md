@@ -25,12 +25,14 @@
 | PTA1 | **FIDLE** (existing idle actuator) | `msns-extra.h:19-21,62-68` |
 | PTA2, PTA3 | Generic outputs X5 / X4 | `msns-extra.h:22-25,64-66` |
 | PTA5 | **X2 / fan** (or water injection) | `msns-extra.h:25,67-68` |
+| **PTA3 / DIP40 pin 36 / JS2** | **X4 / Output 1**, also boost-control PWM | `msns-extra.h:23,66,70`; `msns-extra.ini:1383` |
+| **PTA2 / DIP40 pin 35 / JS3** | **X5 / Output 2** | `msns-extra.h:22,65`; `msns-extra.ini:1389` |
 | PTC0, PTC1, PTC2 | LED17, LED19, LED18; optional spark/other uses | `msns-extra.h:39-44,73-80` |
 | PTD4, PTD5 | Injector outputs 1 and 2 | `msns-extra.h:46-52,55-60` |
 | PTB5/AD5 | Primary EGO/O₂ analog input | `msns-extra.h:29-37` |
 | PTB6/AD6, PTB7/AD7 | Optional analog inputs X7, X6 | `msns-extra.h:35-37` |
 
-**These are original MS1 firmware MCU mappings, NOT proof of which connections, conditioning circuits, or DB37 pins exist on this owner's modified physical board.** In particular, do not substitute MS3 CPU/JS mappings for this list.
+**These are original MS1 firmware MCU mappings.** The **V3.0 mainboard schematic** independently confirms that JS2/JS3 are direct taps from MS1 DIP-40 socket pins 36/35, respectively. The owner's photo confirms the V3.0 board and the owner confirms the added JS2/JS3 circuits are unused. This **does not prove the added transistor stages' electrical behavior or downstream connector routing**. In particular, do not substitute MS3 CPU/JS mappings for the original MS1.
 
 The `msns-extra.ini:260-304` tuning configuration includes FIDLE/spark selection, three LED assignments, X2 fan selection, and additional programmable outputs. The original source's configuration check at `msns-extra.asm:1235-1265` explicitly accommodates a *fuel-only* configuration (no spark output control). **A usable RPM/tach input is still necessary for injection and closed-loop idle.** This conclusion is based on the code's RPM-dependent operation, not on a verified engine wiring diagram.
 
