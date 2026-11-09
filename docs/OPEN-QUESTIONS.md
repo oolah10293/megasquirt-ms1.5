@@ -13,6 +13,17 @@
 - [ ] Check whether this 029y4a baseline matches the firmware on the physical ECU; otherwise choose and document a replacement baseline.
 - [ ] Establish source licensing and appropriate attribution before adding third-party firmware source files to this public repository.
 
+## Current preferred I/O partition (updated by owner, November 8, 2026)
+
+- [x] Owner wants **one existing 2N2222 stage retained for fan relay**, and the other left intact where possible.
+- [x] Preferred provisional pin allocation: **fan=JS2/PTA3** (choice of stage still reversible), **JS3/PTA2 spare**, **IAC STEP=LED17/PTC0**, **IAC DIR=LED19/PTC1**.
+- [ ] Verify fan relay coil current, transistor base drive, supply and clamp/flyback protection; **don't assume 2N2222 switches a motor load**.
+- [ ] Reassign native fan routine from X2/PTA5 or LED18/PTC2 to the selected JS2 or JS3 output; audit conflicting Output 1/boost or Output 2 code.
+- [ ] Audit all LED17/LED19 squirt/acceleration/ignition/stall writes before granting PTC0/PTC1 to STEP/DIR, and verify real external logic routing.
+- [ ] Confirm whether physical wiring makes JS3 preferable for fan; leave the other 2N2222 stage untouched.
+
+**Prior JS2=STEP/JS3=DIR checklist findings below are historical and superseded by this preference.**
+
 ## Firmware/board feasibility — work left to do
 
 - [ ] Obtain **MS1-specific** PCB/connector/schematic references and confirm board revision.
