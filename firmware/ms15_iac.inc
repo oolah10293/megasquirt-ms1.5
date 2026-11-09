@@ -13,6 +13,31 @@
 ; --------------------------------------------------------------------------
 
 MS15_IAC_SERVICE:
+; Reload startup homing count once at power-on from new page-9 calibration.
+; Saturate corrupt/oversize values at 510 (actual safe valve count unknown).
+        brset   MS15_INIT_DONE,MS15_STATE,MS15_INIT_FINISHED
+        lda     ms15_home_hi_f
+        sta     MS15_HOME_H
+        lda     ms15_home_lo_f
+        sta     MS15_HOME_L
+        lda     MS15_HOME_H
+        cmp     #$01
+        bhi     MS15_HOME_CLAMP
+        blo     MS15_HOME_CHECK_ZERO
+        lda     MS15_HOME_L
+        cmp     #$FE
+        bls     MS15_HOME_CHECK_ZERO
+MS15_HOME_CLAMP:
+        mov     #$01,MS15_HOME_H
+        mov     #$FE,MS15_HOME_L
+MS15_HOME_CHECK_ZERO:
+        lda     MS15_HOME_H
+        ora     MS15_HOME_L
+        bne     MS15_HOME_INIT_OK
+        mov     #1T,MS15_HOME_L
+MS15_HOME_INIT_OK:
+        bset    MS15_INIT_DONE,MS15_STATE
+MS15_INIT_FINISHED:
         brset   MS15_TICK,MS15_STATE,MS15_TICK_PRESENT
         jmp     CalcRunningParameters
 MS15_TICK_PRESENT:
@@ -38,15 +63,20 @@ MS15_HIGH_PHASE:
 MS15_DROP_STEP:
         bclr    water,porta
         bclr    MS15_STEP_HIGH,MS15_STATE
-        mov     #MS15_LOW_DELAY,MS15_WAIT
+        lda     ms15_step_low_f  ; configurable page-9 low interval, ms
+        cmp     #2T
+        bhs     MS15_STEP_LOW_VALID
+        lda     #2T             ; enforce minimum even on corrupt flash
+MS15_STEP_LOW_VALID:
+        sta     MS15_WAIT
         jmp     CalcRunningParameters
 
 MS15_SELECT_MOVE:
         brset   MS15_HOMING,MS15_STATE,MS15_NEED_CLOSE
 
 ; The historical closed-loop idle logic supplies idleDC (0..255). Map
-; each unit to two FULL STEPS (0..510), then cap at a bench placeholder
-; of 320 full steps. Actual IAC travel must be measured and configured.
+; each unit to two FULL STEPS (0..510), then cap by the new flash
+; page-9 maximum. Actual IAC travel must be measured and calibrated.
         lda     idleDC
         lsla
         sta     MS15_TARGET_L
@@ -54,15 +84,17 @@ MS15_SELECT_MOVE:
         rola
         sta     MS15_TARGET_H
         lda     MS15_TARGET_H
-        cmp     #MS15_MAX_H
+        cmp     ms15_max_hi_f
         bhi     MS15_CAP_TARGET
         blo     MS15_COMPARE
         lda     MS15_TARGET_L
-        cmp     #MS15_MAX_L
+        cmp     ms15_max_lo_f
         bls     MS15_COMPARE
 MS15_CAP_TARGET:
-        mov     #MS15_MAX_H,MS15_TARGET_H
-        mov     #MS15_MAX_L,MS15_TARGET_L
+        lda     ms15_max_hi_f
+        sta     MS15_TARGET_H
+        lda     ms15_max_lo_f
+        sta     MS15_TARGET_L
 
 MS15_COMPARE:
         lda     MS15_POS_H
