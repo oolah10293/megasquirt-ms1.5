@@ -38,7 +38,7 @@ The *first attempted run* of the tuning build stopped at the source-only checker
 1. **Do not flash or use on an engine.** The assembly and layout checks do not prove safe real-time operation, injector timing, interrupt latency, or stack high-water.
 2. **IAC travel values are placeholders**, not validated GM 4.3 valve limits. Startup homing and motor current need electrical/mechanical bench tests with the actual IAC and driver.
 3. **Fan electrical circuit is unverified.** Check 2N2222 relay-coil current, base drive, output polarity, flyback diode and harness route.
-4. **The INI is statically aligned but untested in TunerStudio GUI or against the ECU's serial tuning protocol.** It must be opened and its dialogs checked, and saved tune migration/forbidden legacy feature bits still need validation.
+4. **Partial offline TunerStudio GUI rendering has now been verified** by owner screenshots (project, IAC dialog and fan dialog), but **calibration values were implausibly large**. The owner recalled a warning about no tune loaded; its role is unproven. INI value decoding, actual ECU serial tuning, full dialog coverage, saved-tune migration and forbidden legacy feature bits still require validation. See [UI observations](TUNERSTUDIO-OFFLINE-UI-2026-11-09.md).
 5. No firmware has been flashed, released, distributed as an installer or packaged as a production artifact.
 
-**Next engineering milestone:** safe Stim-based bench test with controlled RPM/sensor inputs, oscilloscope checks on STEP/DIR/injector timing, and a TunerStudio project parsing/round-trip check.
+**Next minimum-effort check:** resolve offline TunerStudio calibration-value displays with a known-compatible tune (if available) and verify settings round-trip; after that, plan safe Stim-based bench checks for STEP/DIR/injector timing.
