@@ -7,6 +7,7 @@
 - [`../firmware/ms15_defs.inc`](../firmware/ms15_defs.inc): symbols, existing 029y4a RAM aliases, finite homing/position limits. **Temporary bench-only IAC calibration values.**
 - [`../firmware/ms15_iac.inc`](../firmware/ms15_iac.inc): original **nonblocking** STEP/DIR finite-state controller.
 - [`../patches/ms15-on-029y4a-wip.patch`](../patches/ms15-on-029y4a-wip.patch): integration changes against exactly the owner's uploaded **029y4a** `src/msns-extra.asm`; it has CRLF hunk lines, matching the original CRLF source and was verified locally with **GNU patch --binary --dry-run -p1**. The source itself is not copied to this public repository pending licensing review.
+- [`../tools/check_ms15_source.py`](../tools/check_ms15_source.py): repeatable **source-only** RAM, output-write ownership and approximate branch-span checks, run against the patched source tree. This is **not** a compiler, link-map checker, emulator or timing test.
 
 The patch inserts the two .inc files from this repo under the **`src/`** directory of the original source tree, calls initialization from the existing boot path, publishes a 1 ms tick from the timer interrupt, and **tail-jumps** to the IAC service at the main-loop end. It removes competing legacy GPIO writes rather than assuming disabled tuning options are sufficient.
 
