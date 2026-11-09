@@ -11,7 +11,8 @@ $zip = Join-Path $working '029y4a.zip'
 $expected = '212ebf0a795973146e993571cc421ad89f4bfc541a62bb4cd12de0fff8ca7790'
 $urls = @(
   'https://www.msextra.com/doc/ms1extra/Downloads/029y4a.zip',
-  'https://msextra.com/doc/ms1extra/Downloads/029y4a.zip'
+  'https://msextra.com/doc/ms1extra/Downloads/029y4a.zip',
+  'https://forum.motorkontrolle.de/download/file.php?id=1527'
 )
 $gotZip = $false
 foreach ($url in $urls) {
@@ -21,12 +22,12 @@ foreach ($url in $urls) {
     $hash = (Get-FileHash -Algorithm SHA256 $zip).Hash.ToLowerInvariant()
     Write-Host "Source ZIP SHA256: $hash"
     if ($hash -eq $expected) { $gotZip = $true; break }
-    Write-Warning 'Downloaded ZIP does not match the uploaded source archive. Trying next official URL.'
+    Write-Warning 'Downloaded ZIP does not match the uploaded source archive. Trying next URL.'
   } catch {
     Write-Warning $_.Exception.Message
   }
 }
-if (-not $gotZip) { throw 'Official source ZIP not available with exact uploaded-archive SHA256. No assembly attempted.' }
+if (-not $gotZip) { throw 'No archive source URL returned bytes matching the uploaded ZIP SHA256. No assembly attempted.' }
 
 $extract = Join-Path $working 'source'
 Expand-Archive -Path $zip -DestinationPath $extract -Force
