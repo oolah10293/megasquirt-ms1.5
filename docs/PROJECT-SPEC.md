@@ -25,6 +25,12 @@
 - Determine injector type, impedance and peak/hold or limiting arrangement **before** specifying resistors or driver setup.
 - Preserve deterministic injection timing and safe reset/boot behavior.
 
+### 2026-11-08 newer output decision — supersedes the original STEP/DIR allocation
+
+**Owner preference:** Use **one existing JS2/JS3 2N2222 + nominal 1 kΩ transistor circuit for the single fan relay**, and **leave the other circuit alone** if the MS1 has separate outputs for IAC. **Current provisional design:** JS2/PTA3 as fan, JS3/PTA2 untouched, **PTC0/LED17 as STEP, PTC1/LED19 as DIR**. Owner did not specify whether JS2 or JS3 should be fan; switch them if physical routing favors it.
+
+The native 029y4a fan code (`msns-extra.asm:4971-5009`) operates X2/PTA5 and/or LED18/PTC2, **not JS2/PTA3**. Redirect the existing fan logic to the chosen custom output in a future authorized firmware revision. Verify fan relay coil current, base drive and flyback protection, plus IAC logic-signal routing. This **supersedes the historical JS2=STEP/JS3=DIR suggestion below**, not the existing closed-loop idle design.
+
 ### Stepper idle air control
 
 **2026-11-08 revised design after verifying the real PCB schematic and uploaded 029y4a source/INI:** **JS2 is directly connected to original MS1 PTA3 (X4/Output 1); JS3 is directly connected to PTA2 (X5/Output 2)**, confirmed explicitly by `msns-extra.ini:1383,1389`. Both added output circuits are unused. **Preferred STEP=JS2/PTA3; DIR=JS3/PTA2**; PTC0/PTC1 LEDs are fallback only. Exclude original Output 1/Output 2/boost firmware writes from these pins. The transistors' electrical behavior and external routing still need verification; an optional FIDLE driver enable remains a design choice. Preserve one fan output. Reuse the 029y4a idle target code and schedule motor pulses via a nonblocking state machine in the 1 ms service. See [I/O allocation](IO-ALLOCATION-MS1-V30.md), [design](IAC-STEPPER-DESIGN.md) and [budget](MS1-RESOURCE-BUDGET.md).
