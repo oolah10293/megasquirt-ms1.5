@@ -10,15 +10,16 @@ New-Item -ItemType Directory -Force -Path $working,$results | Out-Null
 $zip = Join-Path $working '029y4a.zip'
 $expected = '212ebf0a795973146e993571cc421ad89f4bfc541a62bb4cd12de0fff8ca7790'
 $urls = @(
+  'https://forum.motorkontrolle.de/download/file.php?id=1527',
   'https://www.msextra.com/doc/ms1extra/Downloads/029y4a.zip',
-  'https://msextra.com/doc/ms1extra/Downloads/029y4a.zip',
-  'https://forum.motorkontrolle.de/download/file.php?id=1527'
+  'https://msextra.com/doc/ms1extra/Downloads/029y4a.zip'
 )
 $gotZip = $false
 foreach ($url in $urls) {
   try {
     Write-Host "Downloading official 029y4a source: $url"
-    Invoke-WebRequest -Uri $url -OutFile $zip -TimeoutSec 50 -MaximumRedirection 8 -UseBasicParsing
+    & curl.exe --fail --location --silent --show-error --max-time 18 --connect-timeout 5 --output $zip $url
+    if ($LASTEXITCODE -ne 0) { throw "curl failed: $LASTEXITCODE" }
     $hash = (Get-FileHash -Algorithm SHA256 $zip).Hash.ToLowerInvariant()
     Write-Host "Source ZIP SHA256: $hash"
     if ($hash -eq $expected) { $gotZip = $true; break }
@@ -40,7 +41,11 @@ function Invoke-OriginalAssembler([string]$name) {
   $generated = Join-Path $src 'msns-extra.s19'
   if (Test-Path $generated) { Remove-Item $generated -Force }
   Write-Host "Running original CASM08Z.EXE for $name"
-  $p = Start-Process -FilePath $assembler -ArgumentList @('msns-extra.asm','S','L','I','M') -WorkingDirectory $src -Wait -PassThru
+  $p = Start-Process -FilePath $assembler -ArgumentList @('msns-extra.asm','S','L','I','M') -WorkingDirectory $src -PassThru
+  if (-not $p.WaitForExit(45000)) {
+    $p.Kill()
+    throw "CASM08Z did not exit within 45 seconds on $name; no successful assembly"
+  }
   Write-Host "CASM08Z exit code: $($p.ExitCode)"
   Get-ChildItem $src | Where-Object { $_.Name -match '^(msns-extra|error|errors).*\.(s19|lst|map|err|log)$' } |
     ForEach-Object { Write-Host "Assembler result: $($_.Name) $($_.Length) bytes" }
