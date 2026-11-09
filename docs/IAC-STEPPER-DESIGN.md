@@ -2,6 +2,20 @@
 
 **Status 2026-11-08:** **Proposed design, not implemented.** No firmware source modifications, assembly, release, vehicle wiring or bench testing authorized/performed. **Updated after exact JS2/JS3 mapping was verified:** preferred pins are PTA3/JS2 and PTA2/JS3, not LED17/LED19. Derived from owner's uploaded **MS1/Extra 029y4a** source and physical MS1/V3.0 photographs.
 
+## Updated preferred output architecture (2026-11-08)
+
+**Owner prefers to use one existing JS2/JS3 2N2222 circuit for a single fan and leave the other intact, provided separate IAC outputs exist.** The earlier sections of this file document the *historical* JS2=STEP, JS3=DIR candidate and are **superseded on pin allocation** by this section. The nonblocking stepper algorithm, driver electrical caveats and resource estimates remain useful.
+
+**Current proposal:** JS2/PTA3=fan relay (firmware fan logic must be remapped; 029y4a natively uses X2 or LED18); JS3/PTA2=untouched spare; **PTC0/LED17=IAC STEP, PTC1/LED19=IAC DIR**. These are provisional until LED-signal routing and fan transistor/relay electrical behavior are verified. The fan pad is only a **proposed** choice; JS3 could be fan instead if physical routing favors it.
+
+Firmware changes required:
+1. Give the chosen fan PTA3/JS2 output exclusive ownership; redirect the source's coolant threshold/hysteresis/cranking-off fan logic from its native `water/PTA5` or `wled/PTC2` writes to the selected `output1/PTA3` (or PTA2 if using JS3). Disable competing general Output 1/boost uses.
+2. Give `sled/PTC0` and `aled/PTC1` exclusive IAC STEP/DIR ownership. Remove/gate active injector-event/acceleration LED and optional spark writes, and handle startup and stall/spark-reset code appropriately so no spurious STEP pulses occur.
+3. Verify the LED output hardware doesn't invert, load or distort STEP/DIR signals; assign safe conditioned external connections.
+4. Confirm the 2N2222 fan stage can safely drive the *relay coil* with proper flyback protection; avoid assuming it can drive the fan motor.
+
+**No wiring changes or firmware build performed.**
+
 ## 1. Goal and deliberate reuse
 
 **Goal:** Have MS1 itself control the GM 4.3 TBI's four-wire IAC while an external dedicated **stepper motor driver** handles current through the two motor coils. **No second intelligent ECU**.
