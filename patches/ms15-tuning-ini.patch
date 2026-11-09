@@ -1,0 +1,191 @@
+--- a/msns-extra.ini
++++ b/msns-extra.ini
+@@ -6 +6,2 @@
+-   signature    = "MS1/Extra format 029y3 *********" ; gets changed when data format/this file changes
++   signature    = "MS1.5 format 001 ***************" ; must match the NEW, not-yet-built firmware signature
++   iniVersion   = 3.0 ; custom MS1.5 definition; do not substitute old 029y3 INI
+@@ -950 +951 @@
+-       idle_dc_lo  = scalar,  U08, 000, "dc", 1, 0, 0, 255, 0
++       idle_dc_lo  = scalar,  U08, 000, "cmd", 1, 0, 0, 255, 0
+@@ -952 +953 @@
+-       idlecrankdc      = scalar,  U08, 002, "dc", 1, 0, 0, 255, 0              ;kg
++       idlecrankdc      = scalar,  U08, 002, "cmd", 1, 0, 0, 255, 0              ; stepper command, 2 steps/unit
+@@ -954,3 +955,3 @@
+-       idledashdc  = scalar,  U08, 004, "dc", 1, 0, 0, 255, 0
+-       idlemindc   = scalar,  U08, 005, "dc", 1, 0, 0, 255, 0
+-       idle_dc_hi  = scalar,  U08, 006, "dc", 1, 0, 0, 255, 0
++       idledashdc  = scalar,  U08, 004, "cmd", 1, 0, 0, 255, 0
++       idlemindc   = scalar,  U08, 005, "cmd", 1, 0, 0, 255, 0
++       idle_dc_hi  = scalar,  U08, 006, "cmd", 1, 0, 0, 255, 0
+@@ -961 +962 @@
+-       idlefreq    = scalar,  U08, 011, "10000/x = Frequency", 1, 0, 0, 255, 0
++       iacDemandLimit = scalar, U08, 011, "cmd", 1, 0, 1, 255, 0 ; legacy idlefreq_f is the MAX idleDC demand; not a pulse frequency
+@@ -965,3 +966,3 @@
+-       idleclosedc  = scalar,  U08, 015, "dc", 1, 0, 0, 255, 0
+-       pwmIdle     = bits,    U08, 016[0:0], "B&G On-Off*^", "PWM"
+-       pwmidlewhen = bits,    U08, 016[1:2], "INVALID", "Warmup only", "Closed loop only", "INVALID"
++       idleclosedc  = scalar,  U08, 015, "cmd", 1, 0, 0, 255, 0
++       pwmIdle     = bits,    U08, 016[0:0], "Temp on/off*", "Warmup/closed-loop" ; selects existing idle algorithm, NOT motor enable
++       pwmidlewhen = bits,    U08, 016[1:2], "INVALID", "Warmup only", "Closed loop only", "INVALID" ; existing algorithm phases
+@@ -1065,0 +1067,6 @@
++
++       ; MS1.5 uses page 9 bytes 113..117, originally unassigned.
++       ; 0xE871..0xE875, confirmed after 113-byte legacy table in 029y4a source.
++       iacStepLowMs  = scalar, U08, 113, "ms",    1, 0, 2, 50, 0
++       iacHomeSteps  = scalar, U16, 114, "steps", 1, 0, 1, 510, 0
++       iacMaxSteps   = scalar, U16, 116, "steps", 1, 0, 0, 510, 0
+@@ -1136,2 +1143,2 @@
+-      subMenu = idleControl,    "&Idle Control",                       0, { !fidleUse  }
+-      subMenu = idleControl2,   "Idle Control (Closed Loop Settings)", 0, { pwmIdle &  (pwmidlewhen >1) }
++       subMenu = idleControl,    "&IAC Stepper / Idle",               9
++       subMenu = idleControl2,   "IAC Closed-Loop Response",           9, { pwmIdle & (pwmidlewhen >1) }
+@@ -1145 +1152 @@
+-      subMenu = tachoutput,     "Tacho output pin",                    0
++   ; MS1.5: legacy tach-output routing on JS0/JS1 is reserved for STEP/DIR.
+@@ -1147,2 +1154,2 @@
+-      subMenu = outputs,      "&Outputs"
+-      subMenu = outputs2,     "S&hift light/ fan/ Output 3+4"
++   ; MS1.5: generic Output 1 (JS2) and Output 2 (JS3) menus intentionally hidden.
++       subMenu = ms15FanControl, "Cooling Fan (JS2)"
+@@ -1171,2 +1178,2 @@
+-      subMenu = WaterInj,     "&Water Injection Settings",     0, { !x2use      }
+-      subMenu = NosSystem,    "&Nitrous System"
++   ; MS1.5 hides legacy feature reserving JS0/JS1/JS2: subMenu = WaterInj,     "&Water Injection Settings",     0, { !x2use      }
++   ; MS1.5 hides legacy feature reserving JS0/JS1/JS2: subMenu = NosSystem,    "&Nitrous System"
+@@ -1179,5 +1186,5 @@
+-      subMenu = boostControl,   "&Boost Control",                      0, { boostUse   }
+-      subMenu = boostTbl1,      "Boost kpa targets table1",            8, { boostUse   }
+-      subMenu = boostTbl3,      "Boost kpa targets table2",            8, { boostUse && BooTbl2Use }
+-      subMenu = boostTbl2,      "Boost duty targets",                  8, { boostUse   }
+-      subMenu = boostIAT,       "IAT Related Boost",                   0, { boostUse   }
++   ; MS1.5 hides legacy feature reserving JS0/JS1/JS2: subMenu = boostControl,   "&Boost Control",                      0, { boostUse   }
++   ; MS1.5 hides legacy feature reserving JS0/JS1/JS2: subMenu = boostTbl1,      "Boost kpa targets table1",            8, { boostUse   }
++   ; MS1.5 hides legacy feature reserving JS0/JS1/JS2: subMenu = boostTbl3,      "Boost kpa targets table2",            8, { boostUse && BooTbl2Use }
++   ; MS1.5 hides legacy feature reserving JS0/JS1/JS2: subMenu = boostTbl2,      "Boost duty targets",                  8, { boostUse   }
++   ; MS1.5 hides legacy feature reserving JS0/JS1/JS2: subMenu = boostIAT,       "IAT Related Boost",                   0, { boostUse   }
+@@ -1286 +1293 @@
+-      field = "#Choose input/output pins to use"
++      field = "#IAC STEP=JS0, DIR=JS1, FAN=JS2; JS3 spare"
+@@ -1292,2 +1299,2 @@
+-      field = "X2 (JS0) function",              x2use
+-      field = "X4 (JS2) function",              boostUse
++   ; MS1.5: JS0 dedicated STEP (do not allow X2 fan/water selection).
++   ; MS1.5: JS2 dedicated fan (do not allow Output1/boost selection).
+@@ -1394,0 +1402,6 @@
++   dialog = ms15FanControl, "MS1.5 Fan Relay (JS2 / PTA3)", 4
++      field = "#JS2 2N2222 transistor: relay-coil drive only"
++      field = "#Check electrical polarity and flyback diode"
++      field = "Fan ON coolant temp",  efanontemp
++      field = "Fan OFF coolant temp", efanofftemp
++
+@@ -1485,42 +1498,39 @@
+-   dialog = idleControl, "PWM 2-Wire Idle Control", 9
+-      topicHelp = Ihelp1
+-
+-      field = "#Algorithm",           pwmIdle
+-      field = "When to use PWM idle", pwmidlewhen, { pwmIdle }
+-      field = "Idle Valve Frequency", idlefreq,    { pwmIdle }
+-      field = "Cranking",             idlecrankdc, { pwmIdle }
+-      field = "Mininum",              idlemindc,   { pwmIdle & (pwmidlewhen >1) }
+-      field = "Closed",               idleclosedc, { pwmIdle & (pwmidlewhen >1) }
+-
+-      field = "#Warmup (open loop) Settings"
+-      field = "Idle duty at lower temp", idle_dc_lo, { pwmIdle & (pwmidlewhen !=0) & (pwmidlewhen != 2) }
+-      field = "Idle duty at upper temp", idle_dc_hi, { pwmIdle & (pwmidlewhen !=0) & (pwmidlewhen != 2) }
+-      field = "Idle Speed Target"
+-
+-      field = "*Fast Idle (lower) Temp",            fastIdleTemp,   { pwmIdle }
+-      field = "*Slow Idle (upper) Temp",            slowIdleTemp,   { pwmIdle }
+-      field = "Fast Idle Speed",                    fastIdleRPM,    { pwmIdle & (pwmidlewhen >1) }
+-      field = "Slow (warm) Idle Speed",             slowIdleRPM,    { pwmIdle & (pwmidlewhen >1) }
+-    ; field = "* Denotes item also used for warmup"
+-      field = "#Dashpot Settings"
+-      field = "TPS threshold",                      idleThresh,     { pwmIdle & (pwmidlewhen >1) }
+-      field = "Idle Activation adder",              irestorerpm,    { pwmIdle & (pwmidlewhen >1) }
+-      field = "Dashpot Settle Time",                idledelayclock, { pwmIdle & (pwmidlewhen >1) }
+-      field = "Dashpot Adder",                      idledashdc,     { pwmIdle & (pwmidlewhen >1) }
+-
+-   dialog = idleControl2,    "Idle Control Continued", 9
+-      topicHelp = Ihelp2
+-      field = "Deadband Range",      Ideadbnd,     { pwmIdle }
+-      field = "#Adaptive Idle Deviation Control"
+-    ; field = "RPM Deviation Control"
+-      field = "This determines how fast the closed loop control responds"
+-      field = "based on how far from the target the current RPM is"
+-      field = "if rpm = target plus 'Upper Limit', the recovery time"
+-      field = "is 'Fast Recovery'"
+-      field = "Upper Limit",         ictlrpm2,     { pwmIdle }
+-      field = "Lower Limit",         ictlrpm1,     { pwmIdle }
+-      field = "Fast recovery",       idlePeriod2,  { pwmIdle }
+-      field = "Slow recovery",       idleperiod,   { pwmIdle }
+-      field = "#Other time constants"
+-      field = "Closure Speed",       Idashdelay,   { pwmIdle & (pwmidlewhen >1) }
+-      field = "Startup Delay",       idlestartclk, { pwmIdle & (pwmidlewhen >1) }
++   dialog = idleControl, "MS1.5 Stepper IAC", 9
++      topicHelp = MS15StepHelp
++      field = "#Stepper positioning: 2 full steps per command unit"
++      field = "#Motor limits must be measured BEFORE valve connection"
++      field = "Idle demand algorithm", pwmIdle
++      field = "Idle control phases", pwmidlewhen, { pwmIdle }
++      field = "#Stepper motor (new MS1.5 page-9 settings)"
++      field = "Inter-step LOW delay (min 2 ms)", iacStepLowMs
++      field = "Startup closing steps", iacHomeSteps
++      field = "Maximum opening steps", iacMaxSteps
++      field = "#Position commands (each command unit = 2 motor steps)"
++      field = "Maximum idle demand", iacDemandLimit, { pwmIdle }
++      field = "Cranking opening demand", idlecrankdc, { pwmIdle }
++      field = "Minimum running demand", idlemindc, { pwmIdle & (pwmidlewhen >1) }
++      field = "Closed throttle demand", idleclosedc, { pwmIdle & (pwmidlewhen >1) }
++      field = "#Warmup positions"
++      field = "Cold engine demand", idle_dc_lo, { pwmIdle & (pwmidlewhen !=0) & (pwmidlewhen !=2) }
++      field = "Warm engine demand", idle_dc_hi, { pwmIdle & (pwmidlewhen !=0) & (pwmidlewhen !=2) }
++      field = "Cold coolant threshold", fastIdleTemp, { pwmIdle }
++      field = "Warm coolant threshold", slowIdleTemp, { pwmIdle }
++      field = "#Closed-loop speed targets"
++      field = "Cold idle target", fastIdleRPM, { pwmIdle & (pwmidlewhen >1) }
++      field = "Warm idle target", slowIdleRPM, { pwmIdle & (pwmidlewhen >1) }
++      field = "#Dashpot"
++      field = "TPS threshold", idleThresh, { pwmIdle & (pwmidlewhen >1) }
++      field = "Idle activation RPM adder", irestorerpm, { pwmIdle & (pwmidlewhen >1) }
++      field = "Dashpot settle delay", idledelayclock, { pwmIdle & (pwmidlewhen >1) }
++      field = "Dashpot opening adder", idledashdc, { pwmIdle & (pwmidlewhen >1) }
++
++   dialog = idleControl2, "MS1.5 Closed Loop Idle", 9
++      topicHelp = MS15StepHelp
++      field = "RPM deadband", Ideadbnd, { pwmIdle }
++      field = "#Closed-loop idle response"
++      field = "RPM deviation upper bound", ictlrpm2, { pwmIdle }
++      field = "RPM deviation lower bound", ictlrpm1, { pwmIdle }
++      field = "Fast recovery period", idlePeriod2, { pwmIdle }
++      field = "Slow recovery period", idleperiod, { pwmIdle }
++      field = "Closure delay", Idashdelay, { pwmIdle & (pwmidlewhen >1) }
++      field = "Startup settle delay", idlestartclk, { pwmIdle & (pwmidlewhen >1) }
+@@ -2051,0 +2062,7 @@
++
++help = MS15StepHelp, "MS1.5 Stepper Idle - WARNING: Bench only"
++       text = "JS0 = STEP; JS1 = DIR; JS2 = fan command; JS3 = spare.<br>"
++       text = "One idle demand unit requests two full motor steps, clamped by maximum opening travel.<br>"
++       text = "Inter-step LOW delay, homing steps, and maximum travel are stored in page 9 offsets 113..117.<br>"
++       text = "These settings require the NEW MS1.5 firmware and must be calibrated with the actual IAC driver and valve.<br>"
++       text = "NOT compatible with the previous MS1.5 test S19 or the original 029y4a firmware.<br>"
+@@ -2852 +2869 @@
+-   idleGauge         = idleDC         "IdleDC",             "%",       0,   255,     -1,    -1,  256,  256, 0, 0
++   idleGauge         = idleDC,        "IAC Command",        "cmd",     0,   255,     -1,    -1,  256,  256, 0, 0
+@@ -2939 +2956 @@
+- idleDCGauge       = idleDC,           "Idle DC",                "%",      0, 100, -1, -1 999, 999, 0, 0
++   idleDCGauge       = idleDC,           "IAC Command",            "cmd",    0, 255, -1, -1, 255, 255, 0, 0
+@@ -3074,4 +3091,4 @@
+-    indicator = { porta & 0b00100000 }, "Fan/W Inj Off",      "Fan/W Inj On",       white,  black,  green, black
+-    indicator = { porta & 0b00010000 }, "NOS/W Inj Off",      "NOS/W Inj Pulsing",  white,  black,  green, black
+-    indicator = { porta & 0b00001000 }, "Output1/Boost Cont", "Output1/Boost Cont", white,  black,  green, black
+-    indicator = { porta & 0b00000100 }, "Output2 Off",        "Output2 On",         white,  black,  green, black
++    indicator = { porta & 0b00100000 }, "JS0 STEP low",      "JS0 STEP high",      white,  black,  green, black
++    indicator = { porta & 0b00010000 }, "JS1 DIR=0",         "JS1 DIR=1",         white,  black,  green, black
++    indicator = { porta & 0b00001000 }, "JS2 fan cmd low",   "JS2 fan cmd high",   white,  black,  green, black
++    indicator = { porta & 0b00000100 }, "JS3 spare low",     "JS3 spare high",     white,  black,  green, black
+@@ -3079 +3096 @@
+-    indicator = { portc & 0b00000100 }, "Fan/Output4 Off",    "Fan/Output4 On",     white,  black,  green, black
++    indicator = { portc & 0b00000100 }, "LED18 low",         "LED18 high",        white,  black,  green, black
+@@ -3187 +3204 @@
+-   idleDC           = scalar, U08, 21, "%",      1.000, 0.000
++   idleDC           = scalar, U08, 21, "cmd",    1.000, 0.000 ; commanded units (2 full steps each), NOT actual position
