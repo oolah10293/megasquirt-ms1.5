@@ -3,7 +3,7 @@ name: MS1.5 unvalidated Windows test assembly
 on:
   push:
     branches: [ms15-test-build]
-    paths: ['.github/workflows/ms15-test-build.yml']
+    paths: ['.github/workflows/ms15-test-build.yml', 'tools/windows-test-build.ps1']
   workflow_dispatch:
 
 permissions:
