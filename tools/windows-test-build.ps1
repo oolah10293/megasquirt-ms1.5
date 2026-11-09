@@ -1,4 +1,4 @@
-# Test assembly of original MS1/Extra 029y4a and MS1.5 WIP.
+# Test assembly of original MS1/Extra 029y4a and MS1.5 WITH tuning updates.
 # Runs only on disposable Windows GitHub Actions runner.
 # IMPORTANT: test image is NOT safe to flash or deploy to an engine.
 $ErrorActionPreference = 'Stop'
@@ -89,12 +89,20 @@ Push-Location $tree
 try {
   & $patch --binary --forward -p1 -i (Join-Path $repo 'patches\ms15-on-029y4a-wip.patch')
   if ($LASTEXITCODE -ne 0) { throw "MS1.5 patch failed with exit code $LASTEXITCODE" }
+  & $patch --binary --forward -p1 -i (Join-Path $repo 'patches\ms15-tuning-firmware-addendum.patch')
+  if ($LASTEXITCODE -ne 0) { throw "Tuning firmware addendum patch failed with exit code $LASTEXITCODE" }
+  & $patch --binary --forward -p1 -i (Join-Path $repo 'patches\ms15-tuning-ini.patch')
+  if ($LASTEXITCODE -ne 0) { throw "TunerStudio INI patch failed with exit code $LASTEXITCODE" }
 } finally { Pop-Location }
 
 # Run only STATIC checks: no hardware interaction.
 python (Join-Path $repo 'tools\check_ms15_source.py') $src
 if ($LASTEXITCODE -ne 0) { throw "Static checker failed: $LASTEXITCODE" }
+python (Join-Path $repo 'tools\check_ms15_tuning.py') $tree
+if ($LASTEXITCODE -ne 0) { throw "Tuning/source consistency checker failed: $LASTEXITCODE" }
 
+# This is a TEST INI, not a release or a verified TunerStudio GUI configuration.
+Copy-Item (Join-Path $tree 'msns-extra.ini') (Join-Path $results 'MS15-TUNING-UNVALIDATED.ini') -Force
 Invoke-OriginalAssembler 'MS15-UNVALIDATED-TEST-IMAGE'
 
 # Compare map regions and ensure bootloader/calibration image remained unchanged.
@@ -135,8 +143,14 @@ assert last <= 0xDFFF, f"Code overflow at {last:04X}"
 assert before != after, "No MS1.5 code changes produced"
 
 # Calibration, lookup and actual bootloader unchanged byte-for-byte.
+# Page 9 previously ended at E870. EXACTLY five new tuning bytes are allowed.
+# Every other calibration/bootloader address remains byte-for-byte unchanged.
+new_cal = set(range(0xE871, 0xE876))
+expected_defaults = [4, 1, 104, 1, 64]  # 4 ms, 360 closing, 320 max
+assert [after.get(k) for k in sorted(new_cal)] == expected_defaults, "Wrong page-9 defaults"
+assert all(before.get(k) is None for k in new_cal), "New calibration addresses were occupied in 029y4a"
 for lo, hi in ((0xE000,0xFAC3),(0xFB00,0x10000)):
-    assert all(before.get(k)==after.get(k) for k in range(lo,hi)), f"Protected region {lo:04X} differs"
+    assert all(before.get(k)==after.get(k) for k in range(lo,hi) if k not in new_cal), f"Unexpected protected flash changes in {lo:04X}..{hi:04X}"
 assert all(before.get(k)==after.get(k) for k in range(0xFAC3,0xFACA)), "Fixed vector header changed"
 allowed = set()
 relocations = 0
@@ -150,17 +164,26 @@ for index in range(18):
     if target != old_target: relocations+=1
 assert 0xFACA + 18*3 == 0xFB00
 high_changes = [k for k in before.keys()|after.keys() if k>=0xE000 and before.get(k)!=after.get(k)]
-assert set(high_changes).issubset(allowed), f"Unexpected high-memory differences: {high_changes}"
+assert set(high_changes).issubset(allowed|new_cal), f"Unexpected high-memory differences: {high_changes}"
+assert set(high_changes)&new_cal == new_cal, "Not all five calibration bytes were added"
+signature = b"MS1.5 format 001 ***************"
+version = b"MS1.5 TEST rev 0.1 *************"
+assert len(signature)==32 and len(version)==32
+main_blob = bytes(after.get(k,0) for k in range(0x8128, 0xE000))
+assert main_blob.count(signature)==1, "New 32-byte signature missing or duplicate"
+assert main_blob.count(version)==1, "New 32-byte version missing or duplicate"
 report = [
     "PASS: CASM08Z assembled both images without errors",
     "PASS: Baseline is byte-for-byte identical to shipped 029y4a S19",
-    "PASS: Calibration tables and bootloader unchanged",
+    "PASS: Original calibration tables and bootloader unchanged except exactly five new page-9 bytes",
+    "PASS: New tuning fields at E871-E875: 4 ms low, 360-step home, 320-step max (bench-only defaults)",
+    "PASS: Firmware contains the new 32-byte MS1.5 signature and text version",
     f"PASS: {relocations} interrupt vectors correctly relocated ({len(high_changes)} address-byte changes)",
     f"Main-code end: baseline 0x{max(main_before):04X}; MS1.5 0x{last:04X}",
     f"Net occupied program growth: {len(main_after)-len(main_before)} bytes",
     f"Remaining contiguous flash addresses to DFFF: {0xDFFF-last}",
     "WARNING: UNVALIDATED TEST IMAGE. DO NOT FLASH OR USE ON AN ENGINE.",
-    "Not yet tested: real-time injector timing, stack depth, IAC valve electrical/homing safety, serial and tuning compatibility."
+    "Not yet tested: real-time injector timing, stack depth, IAC valve/homing safety or TunerStudio GUI/serial compatibility."
 ]
 print("\n".join(report))
 (root/"REPORT.txt").write_text("\n".join(report)+"\n")
