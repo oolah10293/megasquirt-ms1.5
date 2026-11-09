@@ -47,6 +47,7 @@ MS1 injector/tach/O₂/fuel pump and ONE fan output retained.
 - Configure the driver current limit **from measured coil requirements**; don't pick a value just because the IC can deliver amperes.
 - Use power/ground conditioning and automotive transient protection. Pololu explicitly warns DRV8825 carriers can experience **destructive LC spikes even at 12 V**, and recommends **at least 47 µF bulk capacitance near VMOT** as one measure: https://www.pololu.com/product/2133/. Automotive load dump/EMI needs additional design review; a printer breakout is a **bench prototype**, not automatically automotive-rated hardware.
 - Ensure nSLEEP/nRESET/nENBL are at safe states before firmware begins issuing STEP pulses; do not assume a sleeping driver retains step position.
+- **Updated component identification (owner-supplied):** Existing unused JS2/JS3 output stages contain **2N2222 NPNs** and **1 kΩ ±5%** resistors (gold–red–black–brown, read backwards). If wired as low-side/common-emitter switches, STEP and DIR would be **inverted open-collector-style signals**. Check actual emitter/collector connections and ensure appropriate logic pull-ups before selecting this route. **TI documents 100 kΩ internal pulldowns on the DRV8825 STEP/DIR inputs, not pull-ups**; a bare open collector cannot make a reliable high on those inputs. See https://www.ti.com/lit/ds/symlink/drv8825.pdf. Do not assume the existing 1 kΩ resistors serve as pull-ups. Bypassing the transistors for protected, direct logic outputs is another candidate, pending electrical design.
 - If two output pins only are available, nENBL could initially be hardware-configured (driver remains energized). A **third signal from FIDLE** would be preferable if safe coil-off control is needed. Keep this as an option until we know the valve's heat/holding needs.
 
 ## 3. Firmware ownership and source locations
@@ -88,7 +89,7 @@ Legacy 029y4a closed-loop idle already increases/decreases `idleDC` **one unit p
 
 ## 6. Not-yet-complete verification
 
-- The **MS1 CPU sources are settled**: JS2=PTA3, JS3=PTA2. Still unknown: custom transistor output polarity, pull-up/level characteristics and exact DB37/harness route. Determine whether to reuse or bypass the transistor stages for valid STEP/DIR logic.
+- The **MS1 CPU sources are settled**: JS2=PTA3, JS3=PTA2. Existing devices are owner-identified **2N2222 NPN with 1 kΩ resistors**, but exact transistor wiring, signal polarity, pull-ups and DB37/harness routing remain unknown. Determine whether to reuse as inverting, pulled-up switching stages or bypass for protected logic STEP/DIR.
 - Ensure no competing 029y4a Output 1/Output 2/boost write paths remain in the MS1.5 configuration. PTC0/PTC1 would need a separate audit only if chosen as fallbacks.
 - Whether 029y4a `MSEC` execution and added service meet worst-case fuel-injection latency requirements.
 - Whether adequate stack/RAM can be reclaimed without overlapping the flash calibration buffer.
