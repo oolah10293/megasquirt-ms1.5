@@ -17,8 +17,8 @@
 
 - [ ] Obtain **MS1-specific** PCB/connector/schematic references and confirm board revision.
 - [ ] Trace physical output modifications already made; locate existing fan output (only one needed).
-- [x] Draft **logical candidates** PTC0/LED17=STEP and PTC1/LED19=DIR; optional FIDLE=driver enable, preserve one fan; **owner-confirmed JS2/JS3 outputs are unused and candidates for IAC reuse**. **Proposal only**: see [I/O allocation](IO-ALLOCATION-MS1-V30.md).
-- [ ] Verify these CPU outputs' physical routes through driver/connector circuits; ensure no remaining LED/ignition writes interfere.
+- [x] **Verified actual V3.0 pad-to-CPU mapping:** **JS2→PTA3/X4/Output 1**; **JS3→PTA2/X5/Output 2** (official schematic, supplied 029y4a header and `msns-extra.ini:1383,1389`). Owner confirms both custom circuits unused. **Preferred allocation is now JS2=STEP, JS3=DIR**, with electrical stages to be validated. See [I/O allocation](IO-ALLOCATION-MS1-V30.md).
+- [ ] Verify the existing **JS2/JS3 transistor stage polarity, external conductor/connector routing and driver logic levels**; eliminate competing **Output 1/Output 2/boost** writes in the MS1.5 code. The original MCU socket-to-JS-pad mapping is already established.
 - [ ] Determine a feasible IAC stepper driver interface from the actual valve's electrical requirements.
 - [x] Identify the 100 µs TIM2 timebase and existing **1 ms MSEC** service as the candidate IAC state-machine insertion point; see [firmware design](IAC-STEPPER-DESIGN.md).
 - [ ] Determine real worst-case execution time and injector jitter once a separate **test build is explicitly authorized**; static sources alone cannot prove this.
@@ -30,7 +30,8 @@
 
 - [x] Confirm mainboard revision: physical photo shows **MegaSquirt V3.0 MB** and socketed MS1 processor, **no daughtercard**. See [board photo review](BOARD-PHOTO-2026-11-08.md).
 - [x] Owner confirms the **two custom output circuits connect to JS2 and JS3 and are unused**; underside photograph supplied (see [board photo review](BOARD-PHOTO-2026-11-08.md)).
-- [ ] Identify the **CPU/control source**, electrical polarity, and connector routing of the **unused** JS2/JS3 output circuits; determine whether to bypass/rework them for IAC STEP/DIR. Confirm the **one fan output separately**; do not assume it uses these unused circuits.
+- [x] **Determine CPU/control source** of unused JS2/JS3: PTA3 and PTA2 respectively. Source and INI confirm X4 Output 1 and X5 Output 2.
+- [ ] Verify the existing **output-stage** electrical polarity/levels, motor-driver compatibility, and downstream DB37/harness route; choose bypass/rework as needed. Confirm **one fan output separately**.
 - [ ] Available tach/RPM signal from ignition equipment (MS1 ignition-output control is not needed).
 - [ ] Target GM 4.3 TBI injectors' impedance; confirm existing resistor value/wattage and intended use.
 - [ ] GM stepper IAC pinout, coil impedance/current, compatible driver topology.
@@ -39,7 +40,7 @@
 ## Later development/test tasks — NOT yet authorized to build
 
 - [x] Draft source-located, **unimplemented** STEP/DIR state-machine design using existing idle algorithm and 1 ms service; see [IAC firmware design](IAC-STEPPER-DESIGN.md).
-- [ ] Validate every original LED/spark/fault write to PTC0 and PTC1 before claiming exclusive control.
+- [ ] Audit and disable/rework every original **Output 1, Output 2 and boost-control write** to PTA3/PTA2 before allocating them exclusively to IAC STEP/DIR. Only audit PTC0/PTC1 LED/spark writers if these fallback pins become necessary.
 - [ ] Develop bounded position tracking/homing, startup and idle-error behavior.
 - [ ] Design validated wideband scaling, sensor-invalid fallback and corrections; **start from existing** 029y4a code.
 - [ ] Preserve one cooling-fan output and TBI injector timing.
@@ -48,4 +49,4 @@
 
 ## Immediate next engineering task
 
-**The initial I/O allocation, stepper firmware concept, and static memory budget are drafted and linked above.** Next verify remaining physical signal routing and the source call paths that write PTC0/PTC1, then estimate the exact step service instruction cost. Actual fit/jitter requires an **explicitly authorized test build and subsequent bench measurement**.
+**The exact JS2/JS3 processor mapping is established**, and the preferred STEP/DIR assignment now uses these unused outputs directly. Next verify added transistor/output electrical behavior and external connector routing; isolate PTA3/PTA2 from legacy output/boost code and estimate step service cycles. Actual fit/jitter requires an **explicitly authorized test build and subsequent bench measurement**.
