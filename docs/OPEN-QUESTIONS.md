@@ -2,14 +2,21 @@
 
 **Updated 2026-11-08 after direct firmware source inspection.** Completed checks below are evidenced in [SOURCE-AUDIT-029Y4A.md](SOURCE-AUDIT-029Y4A.md).
 
-## TunerStudio configuration source draft — 2026-11-09
+## TunerStudio tuning-integrated test assembly — 2026-11-09
+
+- [x] CASM08Z assembled matching new MS1.5 firmware without errors; calibration defaults at `E871–E875` and unique signature verified in S19.
+- [x] Verified previous original source baseline byte-for-byte; protected pages and bootloader unchanged, vector relocation valid, main code ends `DBEF`.
+- [ ] TunerStudio GUI/project file and serial tuning read-write tests still outstanding; never assume static INI checks prove a functioning GUI.
+- [ ] Bench RPM/injector timing and motor/relay electrical protection; **do not flash or use current test image on vehicle**.
+
+## Historical tuning source draft — 2026-11-09
 
 - [x] Custom 32-character firmware/INI matching signature and future test-version string drafted. **Requires a NEW build**; previously passing S19 has old signature.
 - [x] Draft new page-9 IAC motor parameters: low interval, startup homing count and maximum step travel; source/INI offsets 113..117 verified free.
 - [x] Preserve idle algorithm tuning, redefine old PWM `idlefreq` byte as current source's demand cap, and relabel position/idle-control fields. Separate fan JS2 dialog and hide conflicting old output menus.
 - [x] CRLF INI/source addendum patch dry-run checks completed against original 029y4a; static offset checks passed.
 - [ ] Verify the INI actually loads and renders properly in TunerStudio. Check old-tune migration and hidden legacy feature bits.
-- [ ] Obtain separate explicit authorization before **rebuilding** the revised source to test flash growth, signature, CAL pages and real-time behavior.
+- [x] Owner separately authorized **the tuned test build**, which passed using CASM08Z (signature, CAL page and flash checks). **Runtime timing remains untested.** See [tuning build report](TEST-BUILD-TUNING-2026-11-09.md).
 
 See [the source-only tuning record](TUNERSTUDIO-WIP-2026-11-09.md).
 
