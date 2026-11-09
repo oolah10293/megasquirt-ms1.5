@@ -17,10 +17,13 @@
 
 - [ ] Obtain **MS1-specific** PCB/connector/schematic references and confirm board revision.
 - [ ] Trace physical output modifications already made; locate existing fan output (only one needed).
-- [ ] Identify candidate freed ignition/generic outputs and their availability at case connector pins with correct signal protection.
+- [x] Draft **logical candidates** PTC0/LED17=STEP and PTC1/LED19=DIR; optional FIDLE=driver enable, preserve one fan and owner-confirmed JS2/JS3 outputs. **Proposal only**: see [I/O allocation](IO-ALLOCATION-MS1-V30.md).
+- [ ] Verify these CPU outputs' physical routes through driver/connector circuits; ensure no remaining LED/ignition writes interfere.
 - [ ] Determine a feasible IAC stepper driver interface from the actual valve's electrical requirements.
-- [ ] Audit timing/interrupt scheduling for injection, RPM capture, idle movement and serial updates.
-- [ ] Establish real RAM/flash allocation/headroom from correct source/link map; provided `mem_map.txt` says **029h**, not 029y4a.
+- [x] Identify the 100 µs TIM2 timebase and existing **1 ms MSEC** service as the candidate IAC state-machine insertion point; see [firmware design](IAC-STEPPER-DESIGN.md).
+- [ ] Determine real worst-case execution time and injector jitter once a separate **test build is explicitly authorized**; static sources alone cannot prove this.
+- [x] Calculate **current source-defined RAM layout** (210 application bytes + 200 calibration buffer + 19-address pre-stack gap) and **distributed S19** main-code limit (1,145-address gap). See [static resource budget](MS1-RESOURCE-BUDGET.md).
+- [ ] Establish actual reusable RAM/stack high-water and assembled flash growth; historical `mem_map.txt` is for **029h**, not 029y4a.
 - [ ] Plan any protocol, INI, and diagnostics extensions only when resource costs are known.
 
 ## Physical specifics (confirm only what code/schematics cannot establish)
@@ -35,7 +38,8 @@
 
 ## Later development/test tasks — NOT yet authorized to build
 
-- [ ] Produce a source-level, auditable stepper-output design reusing appropriate idle-control routines.
+- [x] Draft source-located, **unimplemented** STEP/DIR state-machine design using existing idle algorithm and 1 ms service; see [IAC firmware design](IAC-STEPPER-DESIGN.md).
+- [ ] Validate every original LED/spark/fault write to PTC0 and PTC1 before claiming exclusive control.
 - [ ] Develop bounded position tracking/homing, startup and idle-error behavior.
 - [ ] Design validated wideband scaling, sensor-invalid fallback and corrections; **start from existing** 029y4a code.
 - [ ] Preserve one cooling-fan output and TBI injector timing.
@@ -44,4 +48,4 @@
 
 ## Immediate next engineering task
 
-**Verify the physical MS1 board and output modifications, then perform a detailed I/O + real-time timing feasibility audit against the 029y4a baseline.** The source package is now available and inspected; do not ask the owner to speculate about features the code already establishes.
+**The initial I/O allocation, stepper firmware concept, and static memory budget are drafted and linked above.** Next verify remaining physical signal routing and the source call paths that write PTC0/PTC1, then estimate the exact step service instruction cost. Actual fit/jitter requires an **explicitly authorized test build and subsequent bench measurement**.
