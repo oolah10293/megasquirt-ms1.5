@@ -2,7 +2,7 @@
 
 Modernizing an existing **MegaSquirt MS1** to run a **GM 4.3L V6 with throttle-body injection (TBI)**, focusing on better idle control, useful wideband O₂ feedback, and a better tuning experience.
 
-**Status (2026-11-08): First MS1.5 firmware source draft now committed**, including original stepper-control assembly include, RAM aliases and an integration patch against uploaded 029y4a; source-only I/O/RAM/patch checks completed. **No firmware compiled, built, flashed or released.** Real IAC motor, driver electrical compatibility, exact assembled ROM size, stack high-water and injector timing are **unverified**. See [source development log](docs/FIRMWARE-WIP-2026-11-08.md).
+**Status (2026-11-09): MS1.5 TEST ASSEMBLY PASSED** using the original CASM08Z assembler. The 029y4a baseline matches the shipped S19 byte-for-byte; the MS1.5 prototype adds **47 occupied program bytes**, remains inside flash limits, and preserves calibration pages and bootloader (interrupt vectors relocated correctly). **No ECU flashing, hardware bench validation or firmware release.** Dynamic stack safety, injector timing, IAC electrical/valve calibration and TunerStudio updates remain unverified. See the [passing test-build report](docs/TEST-BUILD-2026-11-09.md).
 
 ## Confirmed project requirements
 
@@ -51,6 +51,7 @@ The diagram is **conceptual**. Output assignments, driver interface, and signal 
 - [WIP RAM alias map and temporary motor-travel constants](firmware/ms15_defs.inc)
 - [Unbuilt source integration patch for original 029y4a](patches/ms15-on-029y4a-wip.patch)
 - [Firmware implementation record, source-only checks and blockers](docs/FIRMWARE-WIP-2026-11-08.md)
+- [Passing Windows CASM08Z test build and remaining bench validation requirements](docs/TEST-BUILD-2026-11-09.md)
 - [Repeatable non-building source checks](tools/check_ms15_source.py)
 
 ## Project documents
