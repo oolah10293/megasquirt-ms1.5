@@ -1,0 +1,27 @@
+--- a/src/msns-extra.asm
++++ b/src/msns-extra.asm
+@@ -13731,8 +13731,8 @@
+ 
+ 
+ REVNUM: db      00T			; not used, always zero
+-textversion_f:   db   'MS1/Extra rev 029y4 ************' ; full code release
+-Signature:       db   'MS1/Extra format 029y3 *********' ; data format for
++textversion_f:   db   'MS1.5 TEST rev 0.1 *************' ; new 32-byte MS1.5 test identity
++Signature:       db   'MS1.5 format 001 ***************' ; unique 32-byte MS1.5 INI format
+                  ; ini file matching, ONLY change this if the data format changed.
+ ;must be 32 chars     '12345678901234567890123456789012' ; (may change to 20)
+ rpmdotrate:
+@@ -14866,6 +14866,13 @@
+ fixedsplit_f:       db      0T      ; fixed split for testing like Fixed in spark (112)
+ 
+ 
++ ; MS1.5 new page 9 fields at offsets 113..117, original page length = 113.
++ ; Actual motor/driver values MUST be confirmed from physical valve.
++ms15_step_low_f:  db    4T        ; p9 offset 113: inter-step LOW tick count
++ms15_home_hi_f:   db    1T        ; p9 offset 114: startup close steps high
++ms15_home_lo_f:   db    104T      ; p9 offset 115: startup close steps low (360 total)
++ms15_max_hi_f:    db    1T        ; p9 offset 116: max open steps high
++ms15_max_lo_f:    db    64T       ; p9 offset 117: max open steps low (320 total)
+ flash_table8_end:
+ 
+ ms_rf_end_f:
