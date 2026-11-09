@@ -53,8 +53,8 @@ assert 'include "ms15_defs.inc"' in asm and 'include "ms15_iac.inc"' in asm
 sizes = dict.fromkeys(("bset","bclr","lda","sta","cmp","dec","inc","clr"), 2)
 sizes.update(dict.fromkeys(("brset","brclr","jmp","mov"), 3))
 sizes.update(dict.fromkeys(("bra","bhi","blo","bls","bne","beq"), 2))
-sizes.update({"lsla":1,"rola":1})
-branches = {"brset","brclr","bra","bhi","blo","bls","bne","beq"}
+sizes.update({"lsla":1,"rola":1,"ora":2,"bhs":2})
+branches = {"brset","brclr","bra","bhi","blo","bls","bne","beq","bhs"}
 labels, instructions, offset = {}, [], 0
 for row in iac.splitlines():
     line = row.split(";", 1)[0].strip()
