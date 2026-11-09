@@ -6,7 +6,7 @@
 
 | Area | Requirement | Status |
 | --- | --- | --- |
-| Platform | Reuse old MegaSquirt MS1 | Confirmed intent; board revision unknown |
+| Platform | Reuse existing MegaSquirt MS1 processor on **physically verified V3.0 mainboard** | Confirmed from owner's PCB photo and source/board schematic |
 | Engine | GM 4.3L V6 with TBI | Confirmed |
 | Ignition | MS1 does not control spark | Confirmed |
 | Injection | MS1 to control TBI fueling | Confirmed goal |
@@ -16,6 +16,10 @@
 | Tuning | Improve tuning capability / experience | Confirmed goal |
 | Fans | One cooling-fan output only | Confirmed |
 | Resistors | Resistors already on hand | Confirmed; type/value/purpose not verified |
+
+## Current firmware status — WIP source only
+
+First unassembled MS1.5 source draft, 029y4a integration diff and repeatable static checks are now in GitHub. See [source implementation log](FIRMWARE-WIP-2026-11-08.md). No build, flash, or release performed. Previous alternate allocations below are historical.
 
 ## 2. Proposed design (not approved as final)
 
