@@ -27,7 +27,7 @@
 
 ### Stepper idle air control
 
-**2026-11-08 proposed implementation:** Reserve PTC0/LED17 for STEP and PTC1/LED19 for DIR, consider FIDLE for optional enable; **not physically verified or owner-approved as final**. Retain the two added JS2/JS3 outputs and the single fan circuit. Reuse the 029y4a idle target code and schedule motor pulses via a nonblocking state machine in the 1 ms service. See [I/O allocation](IO-ALLOCATION-MS1-V30.md), [design](IAC-STEPPER-DESIGN.md) and [budget](MS1-RESOURCE-BUDGET.md).
+**2026-11-08 proposed implementation:** Reserve PTC0/LED17 for STEP and PTC1/LED19 for DIR, consider FIDLE for optional enable; **not physically verified or owner-approved as final**. The two owner-added JS2/JS3 output stages are **unused** and should be **considered first for repurposing as IAC signal routing** (possibly bypassing/reworking transistor stages), not preserved for no reason. Preserve one fan output; its actual circuit needs verification. Reuse the 029y4a idle target code and schedule motor pulses via a nonblocking state machine in the 1 ms service. See [I/O allocation](IO-ALLOCATION-MS1-V30.md), [design](IAC-STEPPER-DESIGN.md) and [budget](MS1-RESOURCE-BUDGET.md).
 
 
 - **Source-confirmed:** 029y4a already contains closed-loop *PWM* target-idle/warmup/dashpot/recovery logic. Reuse/adapt it where practical; stepper actuation and position tracking still need design. See [source audit](SOURCE-AUDIT-029Y4A.md).
