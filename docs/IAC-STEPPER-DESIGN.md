@@ -1,6 +1,12 @@
 # MS1.5 — stepper IAC firmware and driver design
 
-**Status 2026-11-08:** **Proposed design, not implemented.** No firmware source modifications, assembly, release, vehicle wiring or bench testing authorized/performed. **Updated after full JS0–JS11 map:** preferred IAC pins are PTA5/JS0 and PTA4/JS1; propose JS2 for fan and JS3 as spare. Derived from owner's uploaded **MS1/Extra 029y4a** source and physical MS1/V3.0 photographs.
+**Status 2026-11-08:** **First unassembled WIP source implementation now drafted and committed**; it is NOT proven working, built, flashed, released or bench-tested. The implementation record, verified patch and actual files are linked below. **Updated after full JS0–JS11 map:** preferred IAC pins are PTA5/JS0 and PTA4/JS1; propose JS2 for fan and JS3 as spare. Derived from owner's uploaded **MS1/Extra 029y4a** source and physical MS1/V3.0 photographs.
+
+## Latest source implementation and verified static checks
+
+The working source now exists in [`../firmware/ms15_iac.inc`](../firmware/ms15_iac.inc), [`../firmware/ms15_defs.inc`](../firmware/ms15_defs.inc), and [the source integration patch](../patches/ms15-on-029y4a-wip.patch). See [full implementation and static-validation notes](FIRMWARE-WIP-2026-11-08.md). In the WIP source, the 1 ms timer interrupt only sets a bit; the step state machine runs at a main-loop tail-jump and reuses eight known direct-page bytes. Existing fan logic is retargeted to JS2. All motor travel constants are **unverified placeholders**.
+
+**The following older subsections contain the original conceptual design; follow the committed source and the WIP notes for the current actual logic.** No build authorization has been given.
 
 ## Current proposed output architecture (updated after complete JS-pad audit)
 
