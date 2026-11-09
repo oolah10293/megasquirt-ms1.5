@@ -2,6 +2,10 @@
 
 **Status:** Static arithmetic on the supplied **029y4a** source and distributed `.s19`, completed **2026-11-08**. **No source compiled, no test firmware built, no runtime or bench timing measured.** Amounts labeled 'estimated' are not verified allocations.
 
+## Subsequent draft source update (2026-11-08)
+
+The first source-only IAC implementation is now committed: [implementation record](FIRMWARE-WIP-2026-11-08.md). It **aliases eight pre-existing, source-unused direct-page RAM bytes** (including freed `idleActClock`) rather than allocating additional DS bytes, and tail-jumps to its service routine with no new JSR stack frame. The `BSET` tick flag adds one instruction to the existing 1 ms interrupt; the motor state machine runs on the main loop tail. A static instruction-form estimate counted **79 stepper-service instructions (~179 bytes)**, and the integration patch was dry-run against the original source. **These are static checks, not an assembled code delta or measured timing/stack margin.**
+
 ## 1. ROM/flash: measured from the distributed S-record
 
 The `029y4a/msns-extra.s19` contains **1,761 Motorola S1 records** (plus termination); decoding addresses/data directly shows:
