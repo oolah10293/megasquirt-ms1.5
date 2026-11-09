@@ -1,20 +1,16 @@
 # MS1.5 — stepper IAC firmware and driver design
 
-**Status 2026-11-08:** **Proposed design, not implemented.** No firmware source modifications, assembly, release, vehicle wiring or bench testing authorized/performed. **Updated after exact JS2/JS3 mapping was verified:** preferred pins are PTA3/JS2 and PTA2/JS3, not LED17/LED19. Derived from owner's uploaded **MS1/Extra 029y4a** source and physical MS1/V3.0 photographs.
+**Status 2026-11-08:** **Proposed design, not implemented.** No firmware source modifications, assembly, release, vehicle wiring or bench testing authorized/performed. **Updated after full JS0–JS11 map:** preferred IAC pins are PTA5/JS0 and PTA4/JS1; propose JS2 for fan and JS3 as spare. Derived from owner's uploaded **MS1/Extra 029y4a** source and physical MS1/V3.0 photographs.
 
-## Updated preferred output architecture (2026-11-08)
+## Current proposed output architecture (updated after complete JS-pad audit)
 
-**Owner prefers to use one existing JS2/JS3 2N2222 circuit for a single fan and leave the other intact, provided separate IAC outputs exist.** The earlier sections of this file document the *historical* JS2=STEP, JS3=DIR candidate and are **superseded on pin allocation** by this section. The nonblocking stepper algorithm, driver electrical caveats and resource estimates remain useful.
+**User preference:** Retain **one** of the two existing 2N2222 stages for the single cooling-fan relay and **leave the other intact and unused**. Which stage becomes fan is still a reversible design choice.
 
-**Current proposal:** JS2/PTA3=fan relay (firmware fan logic must be remapped; 029y4a natively uses X2 or LED18); JS3/PTA2=untouched spare; **PTC0/LED17=IAC STEP, PTC1/LED19=IAC DIR**. These are provisional until LED-signal routing and fan transistor/relay electrical behavior are verified. The fan pad is only a **proposed** choice; JS3 could be fan instead if physical routing favors it.
+**Preferred candidate assignment:** **JS0/PTA5=IAC STEP, JS1/PTA4=IAC DIR, JS2/PTA3=fan transistor, JS3/PTA2=spare transistor**. JS7/PTC3 and JS8/PTC4 are another possible STEP/DIR pair. LED17/PTC0 and LED19/PTC1 remain fallbacks. The verified pad map is [JS-PAD-MAP-MS1-V30.md](JS-PAD-MAP-MS1-V30.md), and the current working proposal is [IO-ALLOCATION-MS1-V30.md](IO-ALLOCATION-MS1-V30.md).
 
-Firmware changes required:
-1. Give the chosen fan PTA3/JS2 output exclusive ownership; redirect the source's coolant threshold/hysteresis/cranking-off fan logic from its native `water/PTA5` or `wled/PTC2` writes to the selected `output1/PTA3` (or PTA2 if using JS3). Disable competing general Output 1/boost uses.
-2. Give `sled/PTC0` and `aled/PTC1` exclusive IAC STEP/DIR ownership. Remove/gate active injector-event/acceleration LED and optional spark writes, and handle startup and stall/spark-reset code appropriately so no spurious STEP pulses occur.
-3. Verify the LED output hardware doesn't invert, load or distort STEP/DIR signals; assign safe conditioned external connections.
-4. Confirm the 2N2222 fan stage can safely drive the *relay coil* with proper flyback protection; avoid assuming it can drive the fan motor.
+Why: the MS1 source `msns-extra.h:19–25` and the V3.0 schematic confirm **JS0 and JS1 are direct digital output pins**, already output-configured by `msns-extra.asm:898–900`. They do not need the unused 2N2222 stages for logic drive, although the external STEP/DIR signals still need proper buffering, protection and connector routing.
 
-**No wiring changes or firmware build performed.**
+**Firmware work:** Remap existing fan routine `msns-extra.asm:4971–5009` from JS0/PTA5 or LED18/PTC2 to whichever transistor stage is selected for fan (currently proposing JS2/PTA3), and block Output 1/boost from that pin. Gate/disable legacy fan/water/nitrous/tach writes to JS0 and JS1 so **only the IAC service may toggle them**. Establish reset-safe STEP=0 and motor-driver polarity. No code has been built or flashed.
 
 ## 1. Goal and deliberate reuse
 
@@ -42,8 +38,8 @@ TI timing table (datasheet §7.6):
 ### Conceptual signals (not a pin-accurate wiring diagram)
 
 ```text
-MS1 PTA3 (JS2/X4) --[verify/rework output stage]--> STEP -------+
-MS1 PTA2 (JS3/X5) --[verify/rework output stage]--> DIR --------+|
+MS1 PTA5 (JS0/X2) --[protected logic interface]--> STEP -------+
+MS1 PTA4 (JS1/X3) --[protected logic interface]--> DIR --------+|
 Optional FIDLE ----[appropriate low-side/logic circuit]--> nENBL |||
 MS1 signal ground -------------------------------------------+   |||
 Protected/fused automotive 12V ----------------------------+ |   |||
@@ -61,18 +57,17 @@ MS1 injector/tach/O₂/fuel pump and ONE fan output retained.
 - Configure the driver current limit **from measured coil requirements**; don't pick a value just because the IC can deliver amperes.
 - Use power/ground conditioning and automotive transient protection. Pololu explicitly warns DRV8825 carriers can experience **destructive LC spikes even at 12 V**, and recommends **at least 47 µF bulk capacitance near VMOT** as one measure: https://www.pololu.com/product/2133/. Automotive load dump/EMI needs additional design review; a printer breakout is a **bench prototype**, not automatically automotive-rated hardware.
 - Ensure nSLEEP/nRESET/nENBL are at safe states before firmware begins issuing STEP pulses; do not assume a sleeping driver retains step position.
-- **Updated component identification (owner-supplied):** Existing unused JS2/JS3 output stages contain **2N2222 NPNs** and **1 kΩ ±5%** resistors (gold–red–black–brown, read backwards). If wired as low-side/common-emitter switches, STEP and DIR would be **inverted open-collector-style signals**. Check actual emitter/collector connections and ensure appropriate logic pull-ups before selecting this route. **TI documents 100 kΩ internal pulldowns on the DRV8825 STEP/DIR inputs, not pull-ups**; a bare open collector cannot make a reliable high on those inputs. See https://www.ti.com/lit/ds/symlink/drv8825.pdf. Do not assume the existing 1 kΩ resistors serve as pull-ups. Bypassing the transistors for protected, direct logic outputs is another candidate, pending electrical design.
+- **Existing 2N2222 stages:** Keep one for the fan-relay output and preferably leave the other as a spare. They are **not part of the current STEP/DIR logic proposal**. Verify fan relay coil current, base drive and flyback protection; separate raw JS0/JS1 logic routing still needs buffering/protection appropriate to the external driver.
 - If two output pins only are available, nENBL could initially be hardware-configured (driver remains energized). A **third signal from FIDLE** would be preferable if safe coil-off control is needed. Keep this as an option until we know the valve's heat/holding needs.
 
 ## 3. Firmware ownership and source locations
 
-- **JS2 = PTA3 (X4 / Output 1 / boost control), JS3 = PTA2 (X5 / Output 2)** are verified by the V3.0 schematic and the supplied INI (`msns-extra.ini:1383,1389`); they are **unused on the owner's modified hardware**, so they are the **preferred STEP and DIR pins**.
-- PTA3 needs exclusive MS1.5 ownership: ordinary Output 1 writes occur at `msns-extra.asm:4699,4708`; boost PWM also writes PTA3 at `9441-9447`. PTA2 programmable Output 2 writes occur at `4777-4809`. Gate or remove these competing paths in the MS1.5 configuration.
-- `msns-extra.asm:898-900` initializes `PORTA=0` and `DDRA=$FF`; check effective STEP polarity after the user's transistor stage, pull-ups and driver input stage.
-- **PTC0/PTC1 LED17/LED19 remain a fallback**, not the preferred allocation. If that alternate is used, all LED/ignition writes and stall macros would require independent audit.
-- **Idle algorithm**: keep `idleDC` as **requested position** (0…255 units initially) rather than PWM duty. Map existing `idlecrankdc_f`, `idleclosedc_f`, `idle_dc_lo/hi`, `idlemindc_f`, `idledashdc_f` to new position semantics with updated TunerStudio definitions.
-- Reinterpret the existing `idlefreq_f` PWM-period/upper-duty setting as a **position maximum** only if all source uses are audited and the matching tuning INI is updated. No automatic compatibility with existing tunes.
-- Add `iacActualPosition`, `iacStepInterval`/divider, `iacPhase` flags, and bounded homing/reference count. A one-byte target may handle a practical operating region but may **not cover the whole documented GM mechanical travel**. The exact count widths and calibration range are still design choices.
+- **JS0 / PTA5 / X2** proposed for STEP, **JS1 / PTA4 / X3** proposed for DIR. The `msns-extra.h` header confirms both; `msns-extra.asm:898–900` configures these as outputs.
+- Legacy **fan, water injection and optional tach-output** code writes JS0; **second water/nitrous and optional tach-output** code writes JS1. Review/gate `msns-extra.asm:4971–5009,5060+,9270–9496,10979–11005,13275–13292`. These are not safe IAC outputs until code ownership is exclusive.
+- The **single fan** is proposed on **JS2/PTA3** with the existing owner-built 2N2222; retarget existing fan on/off thresholds/hysteresis and cranking-off logic, and remove generic Output 1/boost writers from PTA3. Leave JS3/PTA2 with its second 2N2222 stage untouched.
+- Alternate JS7/PTC3 and JS8/PTC4 are accessible digital outputs but share shift-light/optional spark and second-trigger features. Choose them only if source inspection and external routing favor them.
+- Keep `idleDC` as a possible **requested position** (0…255 initially), not PWM duty; refactor startup/closed-loop/dashpot algorithms and the TunerStudio definitions as needed. Do not assume existing tunes are compatible.
+- Add minimal position/step-interval/phase/reference state subject to RAM and interrupt budget validation. No implemented or tested state machine yet.
 
 ## 4. Proposed nonblocking step schedule
 
@@ -103,7 +98,7 @@ Legacy 029y4a closed-loop idle already increases/decreases `idleDC` **one unit p
 
 ## 6. Not-yet-complete verification
 
-- The **MS1 CPU sources are settled**: JS2=PTA3, JS3=PTA2. Existing devices are owner-identified **2N2222 NPN with 1 kΩ resistors**, but exact transistor wiring, signal polarity, pull-ups and DB37/harness routing remain unknown. Determine whether to reuse as inverting, pulled-up switching stages or bypass for protected logic STEP/DIR.
+- Current candidate IAC signals JS0/PTA5 and JS1/PTA4 are direct MCU outputs; confirm protected electrical routing to the external STEP/DIR controller. Existing JS2/PTA3 and JS3/PTA2 2N2222 stages are reserved for fan/spare, and actual fan circuit polarity/relay requirements remain unverified.
 - Ensure no competing 029y4a Output 1/Output 2/boost write paths remain in the MS1.5 configuration. PTC0/PTC1 would need a separate audit only if chosen as fallbacks.
 - Whether 029y4a `MSEC` execution and added service meet worst-case fuel-injection latency requirements.
 - Whether adequate stack/RAM can be reclaimed without overlapping the flash calibration buffer.
