@@ -17,7 +17,7 @@
 
 - [ ] Obtain **MS1-specific** PCB/connector/schematic references and confirm board revision.
 - [ ] Trace physical output modifications already made; locate existing fan output (only one needed).
-- [x] Draft **logical candidates** PTC0/LED17=STEP and PTC1/LED19=DIR; optional FIDLE=driver enable, preserve one fan and owner-confirmed JS2/JS3 outputs. **Proposal only**: see [I/O allocation](IO-ALLOCATION-MS1-V30.md).
+- [x] Draft **logical candidates** PTC0/LED17=STEP and PTC1/LED19=DIR; optional FIDLE=driver enable, preserve one fan; **owner-confirmed JS2/JS3 outputs are unused and candidates for IAC reuse**. **Proposal only**: see [I/O allocation](IO-ALLOCATION-MS1-V30.md).
 - [ ] Verify these CPU outputs' physical routes through driver/connector circuits; ensure no remaining LED/ignition writes interfere.
 - [ ] Determine a feasible IAC stepper driver interface from the actual valve's electrical requirements.
 - [x] Identify the 100 µs TIM2 timebase and existing **1 ms MSEC** service as the candidate IAC state-machine insertion point; see [firmware design](IAC-STEPPER-DESIGN.md).
@@ -29,8 +29,8 @@
 ## Physical specifics (confirm only what code/schematics cannot establish)
 
 - [x] Confirm mainboard revision: physical photo shows **MegaSquirt V3.0 MB** and socketed MS1 processor, **no daughtercard**. See [board photo review](BOARD-PHOTO-2026-11-08.md).
-- [x] Owner confirms the **two custom output circuits connect to JS2 and JS3**; underside photograph supplied (see [board photo review](BOARD-PHOTO-2026-11-08.md)).
-- [ ] Identify the **CPU/control source**, driver circuitry and external load/connector destination of each JS2/JS3 custom output; determine which one is used for the single required fan, if either.
+- [x] Owner confirms the **two custom output circuits connect to JS2 and JS3 and are unused**; underside photograph supplied (see [board photo review](BOARD-PHOTO-2026-11-08.md)).
+- [ ] Identify the **CPU/control source**, electrical polarity, and connector routing of the **unused** JS2/JS3 output circuits; determine whether to bypass/rework them for IAC STEP/DIR. Confirm the **one fan output separately**; do not assume it uses these unused circuits.
 - [ ] Available tach/RPM signal from ignition equipment (MS1 ignition-output control is not needed).
 - [ ] Target GM 4.3 TBI injectors' impedance; confirm existing resistor value/wattage and intended use.
 - [ ] GM stepper IAC pinout, coil impedance/current, compatible driver topology.
