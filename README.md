@@ -2,7 +2,7 @@
 
 Modernizing an existing **MegaSquirt MS1** to run a **GM 4.3L V6 with throttle-body injection (TBI)**, focusing on better idle control, useful wideband O₂ feedback, and a better tuning experience.
 
-**Status:** Requirements and source audit complete; **provisional I/O allocation, IAC firmware/driver design, and static memory/timing budget drafted** (2026-11-08). A working IAC, verified output wiring, measured runtime timing, exact stack safety and installed ECU firmware version are **not yet established**. No MS1.5 firmware has been written, compiled, flashed, or released.
+**Status (2026-11-08): First MS1.5 firmware source draft now committed**, including original stepper-control assembly include, RAM aliases and an integration patch against uploaded 029y4a; source-only I/O/RAM/patch checks completed. **No firmware compiled, built, flashed or released.** Real IAC motor, driver electrical compatibility, exact assembled ROM size, stack high-water and injector timing are **unverified**. See [source development log](docs/FIRMWARE-WIP-2026-11-08.md).
 
 ## Confirmed project requirements
 
@@ -44,6 +44,13 @@ These items come directly from the project owner's discussion on November 8, 202
 ```
 
 The diagram is **conceptual**. Output assignments, driver interface, and signal availability are not yet validated.
+
+## Firmware development — source only, no build
+
+- [Current WIP assembly stepper state machine](firmware/ms15_iac.inc)
+- [WIP RAM alias map and temporary motor-travel constants](firmware/ms15_defs.inc)
+- [Unbuilt source integration patch for original 029y4a](patches/ms15-on-029y4a-wip.patch)
+- [Firmware implementation record, source-only checks and blockers](docs/FIRMWARE-WIP-2026-11-08.md)
 
 ## Project documents
 
