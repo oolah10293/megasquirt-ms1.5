@@ -1,84 +1,60 @@
-# Proposed MS1.5 I/O allocation — GM 4.3 TBI
+# MS1.5 I/O allocation — CURRENT working design
 
-**Status 2026-11-08:** Source-based **candidate design**, not verified physical wiring and not a completed continuity check. No firmware or hardware modifications performed.
+**Updated 2026-11-08.** This replaces historical pin-allocation proposals in this document. This is a **source-verified processor map** plus **a provisional engineering proposal**, not installed wiring or implemented firmware. No build/flash performed.
 
-## 2026-11-08 — Owner's revised output preference (supersedes prior JS2/JS3 IAC preference)
+**Full verified JS-pad map:** [JS-PAD-MAP-MS1-V30.md](JS-PAD-MAP-MS1-V30.md). Source evidence: owner's `029y4a.zip` and [V3.0 schematic, sheet 1](https://www.megamanual.com/ms2/megasquirt_ShemV3.00.pdf).
 
-**Owner decision:** Keep **one** of the two previously unused owner-built **2N2222 + nominal 1 kΩ** output stages for the **single cooling fan**. Prefer **leaving the other stage untouched** if two independent IAC logic outputs can be allocated elsewhere.
+## Owner-confirmed requirements
 
-**Proposed assignment, NOT yet hardware-approved:** Use **JS2 / PTA3 / X4 / Output 1** and its existing transistor stage for **fan relay switching**; leave **JS3 / PTA2 / X5 / Output 2** and its existing stage **unused and intact**. The assignment of *which* stage becomes fan is a design choice, **not an owner-specified pad choice**. If the wiring favors JS3 instead, swap them.
+- GM 4.3 TBI, original MS1 processor on physical V3.0 mainboard.
+- **No spark control by MS1**, but RPM/tach input is still required.
+- Keep exactly **one cooling-fan output**.
+- Reuse **one existing JS2 or JS3 2N2222 + nominal 1 kΩ switching stage** for that fan, and preferably **leave the other stage intact and spare**.
+- External stepper driver for IAC controlled by MS1 firmware, with STEP/DIR if compatible.
+- Retain injection, fuel pump, wideband O₂ and tuning functions.
+- Installed firmware version, current physical loads and downstream wiring remain unverified.
 
-- Firmware evidence: `029y4a/src/msns-extra.h:20-25,39-43,62-78` maps JS2/PTA3, JS3/PTA2, LED17/PTC0 and LED19/PTC1.
-- **Important firmware change:** `msns-extra.asm:4971-5009` supports fan on **X2/PTA5 or LED18/PTC2**, **not JS2/PTA3**. For this design, remap the existing fan on/off/hysteresis/cranking control to whichever reused output (JS2 or JS3) is chosen. Do not merely configure 029y4a's existing X2 fan flag and expect JS2 to toggle.
-- **Proposed IAC logic signals:** LED17/**PTC0** for STEP and LED19/**PTC1** for DIR, since MS1 spark output is unused. This reverts their earlier fallback status: they are again the **preferred** candidates. Remove/gate *all active LED/ignition code writes* before giving those pins exclusive IAC control. Their existing LED output circuitry is not automatically the right interface for STEP/DIR, and **two suitable signal paths to the external driver still have to be arranged and verified**.
-- **Single fan physical circuit:** A 2N2222 may suit a small relay coil **if** its actual current, base-drive arrangement, relay supply and **flyback diode/clamp** are verified. A 1 kΩ resistor and 2N2222 identification alone do not prove relay-coil capacity or protection. **Do not switch the fan motor directly through the 2N2222** without verifying load ratings.
-- **JS3 left intact:** The other 2N2222 circuit is left wired as-is and not consumed by the IAC or fan unless future pin/hardware constraints make that necessary.
-- Preserve injector and tach/RPM paths, analog wideband input and fuel-pump output. FIDLE remains an optional enable candidate after auditing its own hardware/software role.
+## Preferred logical allocation (proposed, NOT yet owner-selected final pins)
 
-**Engineering status:** This is the **current preferred direction**, not completed ECU wiring or firmware. No build/release/flash was requested or performed.
+| Function | Proposed MS1 signal | Evidence / conditions |
+| --- | --- | --- |
+| IAC **STEP** | **JS0 = PTA5 = X2 = DIP pin 38** | Verified digital output; remove/disable legacy water injection, stock X2 fan and tach-output writers |
+| IAC **DIR** | **JS1 = PTA4 = X3 = DIP pin 37** | Verified digital output; remove/disable second water/nitrous injector and tach-output writers |
+| **Fan relay** | **JS2 = PTA3 = X4 = DIP pin 36** with existing 2N2222 | Owner wants one existing transistor circuit retained for fan; **JS2 vs JS3 choice is only a proposal**; remap fan from X2/LED18 and disable Output1/boost writes |
+| Spare switch | **JS3 = PTA2 = X5 = DIP pin 35** with other 2N2222 | Leave intact if JS2 is assigned fan |
+| Injectors 1/2 | PTD4/PTD5 | Preserve original injector timing/current protection |
+| Fuel pump | PTA0 | Preserve |
+| Tach/RPM input | Existing tach interrupt/input hardware | Preserve; MS1 fuel-only does not eliminate need for tach |
+| Wideband O₂ | PTB5/AD5 via wideband controller | Preserve/calibrate |
+| Optional driver enable | FIDLE/PTA1 | Only if needed; verify output circuit and firmware owners |
 
-## Evidence and nomenclature
+**Directly verified:** `029y4a/src/msns-extra.h:19-80` and `msns-extra.ini:670,1383,1389`. Firmware initialization at `msns-extra.asm:898-900` sets all PTA pins as outputs. **Design choice:** repurposing JS0/JS1 for STEP/DIR. Whether the added fan transistor circuitry safely drives the actual relay coil still requires electrical verification.
 
-- **Physical board:** Owner's photographs show **MegaSquirt V3.0 MB** with an original MS1 processor in the 40-pin socket (no MS2/MS3 daughtercard).
-- **Owner's clarification (2026-11-08):** Two added output stages connect to **JS2 and JS3**, and **both are unused**. Each uses an owner-identified **2N2222 NPN transistor** and a resistor with **gold–red–black–brown** bands, interpreted as **1 kΩ ±5%** read from the brown end. The pads are direct MS1 MCU outputs. Whether these are common-emitter low-side stages, which node the resistors connect to, the transistor outputs' voltage levels/polarity and external connector destinations remain unverified.
-- **Original processor mapping:** The uploaded `029y4a/src/msns-extra.h:19-80` maps MS1 CPU ports; these are **not** the MS3 CPU-to-JS-pad assignments in the uploaded MS3 hardware guide.
-- **V3.0 connector routing:** The official V3.0 assembly guide identifies JS0–JS3 as **jumper pads**, normally connected to the IAC-labelled DB37 connector signals in **MS2 configurations** (JS0→IAC1A/DB37-25, JS1→IAC1B/DB37-27, JS2→IAC2A/DB37-29, JS3→IAC2B/DB37-31). This **does not create MS2 stepper motor outputs on an MS1**; it identifies available routing options, subject to the actual board's jumpering. Source: https://www.megamanual.com/ms2/V3assemble.htm
+### Other straightforward options if JS0/JS1 prove inconvenient
 
-## Verified JS2 / JS3 pad assignment
+- **JS7 = PTC3 / DIP pin 10** and **JS8 = PTC4 / DIP pin 11**: both normally outputs; traditionally shift-light outputs, and JS8 can become second-trigger **input**. Their firmware owners/configuration must be cleared.
+- LED17/PTC0 and LED19/PTC1: legitimate outputs but already used by Squirt/Accel LEDs and optional spark; additional routing and writer cleanup needed.
+- **JS4/JS5** are AD7/AD6 analog-capable input pins: preserve for future second O₂ / pressure / EGT if possible, rather than automatically consuming them as outputs.
+- **JS9–JS11** map to PTD1–PTD3, normally configured as **inputs** for nitrous/table switch, knock and launch; repurposing them requires deliberate DDR and feature changes. **JS9 has a specific 12-V damage hazard on MS1.**
+- **JS6 is MCU RESET**: not available for IAC.
 
-**Exact physical pad mapping — VERIFIED FROM TWO INDEPENDENT PROJECT ARTIFACTS:** The official V3.0 schematic (https://www.megamanual.com/ms2/megasquirt_ShemV3.00.pdf, sheet 1) routes **JS2 directly to DIP-40 socket pin 36** and **JS3 directly to socket pin 35**. With the original MS1 MC68HC908GP32 installed, these are **PTA3** and **PTA2**, respectively. The uploaded `029y4a/src/msns-extra.h:19-25,62-70` defines **PTA3=Output 1 (X4)/boost**, **PTA2=Output 2 (X5)**. Even more explicitly, the firmware's tuning definition `029y4a/msns-extra.ini:1383,1389` labels them **“OUTPUT 1 (X4 / JS2)”** and **“OUTPUT 2 (X5 / JS3)”**. These are *direct MCU outputs*, not just anonymous connector-wire routing points. The MS2-specific names **IAC2A/IAC2B** describe what a different daughtercard would use the same socket pins for; MS1 does **not** contain that driver's electronics.
+## Why JS0/JS1 currently beat LED17/LED19
 
-| Pad | Socket pin | Actual MS1 CPU pin | 029y4a output/feature |
-| --- | ---: | --- | --- |
-| **JS2** | **36** | **PTA3 / port A bit 3** | **X4 / Output 1**, shared with optional boost-control PWM |
-| **JS3** | **35** | **PTA2 / port A bit 2** | **X5 / Output 2**, general programmable output |
+JS0 and JS1 are raw, independent processor output pads already intended as accessible jumper points on the V3.0. The existing 029y4a firmware makes them digital outputs; the intended GM 4.3 application does not require their old water/nitrous functions. Their suitable DB37 routing, level conditioning and exclusive firmware ownership still need planning. **Using JS0/JS1 is a new candidate design, not yet approved as final.**
 
-The 029y4a firmware initializes both as outputs (`msns-extra.asm:898-900` sets `DDRA=$FF`). Its existing programmable output routine writes both pins (`msns-extra.asm:4609-4810`); boost control writes **PTA3** (`msns-extra.asm:9441-9447`). These writes must be removed or excluded by the MS1.5 configuration before giving those pins to STEP/DIR.
+JS7/JS8 might be equally good if source call-path or external routing review favors them. The right choice is the pair with the fewest conflicting writes and simplest safe wiring. **No reason to sacrifice the unused JS3 2N2222 just to find enough IAC signals.**
 
-## Historical candidate allocation — superseded by newer owner preference below
+## Mandatory source changes before future build authorization
 
-**IMPORTANT:** The older STEP=JS2, DIR=JS3 candidate and the old table below are **superseded** by the dated preference section at the top. Use that newer section for current work.
+1. Retarget existing fan on/off/hysteresis/cranking-off logic from `PTA5/JS0` or `LED18/PTC2` to whichever *retained* transistor output controls the fan (proposed `PTA3/JS2`). Stock 029y4a **does not natively run its fan routine on JS2**.
+2. Give PTA5/JS0 and PTA4/JS1 **exclusive IAC ownership**. The existing fan, water-injection/nitrous and optional tach-output routines write these bits (`msns-extra.asm:4971-5009,5060+,9270+,10979-11000,13275+`). Gate or remove conflicting writes.
+3. Disable generic Output1/boost code on PTA3 if JS2 is assigned to the fan, and define safe reset polarity for the 2N2222 stage.
+4. Determine motor driver's STEP/DIR logic voltage, required pull-ups/pull-downs, default enable behavior and actual valve current/coil configuration.
+5. Confirm how logic signals exit via connector/harness; no external pinout or relay current rating has yet been proven from owner photos.
+6. Validate available RAM, flash and real-time injection timing by separate explicitly authorized compile/bench tests.
 
-## Prior output allocation — for historical comparison only
+## Historical decisions
 
-| Role | Candidate MS1 CPU signal / hardware | Existing firmware use | Proposed treatment | Confidence |
-| --- | --- | --- | --- | --- |
-| Injector 1 | PTD4 / injector 1 | Injector drive | **Preserve** | Source-verified; physical harness not traced |
-| Injector 2 | PTD5 / injector 2 | Injector drive | **Preserve** | Source-verified; physical harness not traced |
-| Tach/RPM input | Existing IRQ/tach path | Injection timing / RPM | **Preserve** even though MS1 does not command spark | Source-verified architecture; actual input source unknown |
-| O₂ / EGO | PTB5 / AD5 | Existing EGO conversion | **Preserve** and calibrate for external wideband controller | Source-verified |
-| Fuel pump | PTA0 | Pump relay | **Preserve** | Source-verified |
-| Cooling fan | **One** of original supported fan configurations: PTA5/X2 or PTC2/LED18 | Coolant on/off with hysteresis, `msns-extra.asm:4971-5009` | **Preserve whichever physical output is actually installed**; never allocate both by assumption | Firmware options source-verified; actual hardware unverified |
-| **IAC STEP** | **PTA3 / JS2 (X4)** | Programmable Output 1, alternative boost PWM | **Preferred STEP** using existing unused connection; reassign exclusive firmware ownership | CPU pad and source function verified; added transistor stage electrical suitability unverified |
-| **IAC DIR** | **PTA2 / JS3 (X5)** | Programmable Output 2 | **Preferred DIR** using existing unused connection; reassign exclusive firmware ownership | CPU pad and source function verified; added transistor stage electrical suitability unverified |
-| **Fallback STEP/DIR** | PTC0 / LED17 and PTC1 / LED19 | Squirt/Accel LEDs and optional ignition | **Fallback only** if JS2/JS3 added stages or connector routing cannot be made suitable | Source mapping verified; physical routing would require additional work |
-| IAC driver enable (optional, preferred for final design) | PTA1 / FIDLE | Existing PWM idle drive or spark depending on options | Consider for **nENABLE** after replacing PWM idle actuator; hardware polarity and current/signal conditioning must be checked | Candidate only |
-
-### Why the existing JS2/JS3 pins are now preferred
-
-They **are** PTA3 and PTA2 on the MS1, directly. We do **not** need to wire separate LED outputs into these pads. Both are unused according to the owner. MS1.5 should take exclusive software ownership of these bits instead of leaving generic output/boost handlers active.
-
-- **PTA3 / JS2 / X4:** `Output1` and `boostP` share port A bit 3 (`msns-extra.h:66,70`). Disable or gate existing programmable Output 1 and boost PWM writes.
-- **PTA2 / JS3 / X5:** `Output2` is port A bit 2 (`msns-extra.h:65`). Disable or gate programmable Output 2 writes.
-- Initialize STEP low and DIR to a defined level; existing `clr porta` at reset is present but must be checked against the external circuit's inversion and pull-up behavior.
-- The confirmed **2N2222 NPN** parts are capable of low-side switching, but the observed components **do not by themselves prove common-emitter/open-collector wiring**. If so, outputs are **inverting and require a suitable pull-up** for logic-high; resistor placement and current paths must be checked. A **1 kΩ** resistor could be a base resistor, but that is **unverified**, not a confirmed output pull-up. The planned DRV8825 has internal pull-*downs* on STEP and DIR (TI datasheet), so relying on the driver alone would **not** supply the high level for an open-collector connection. Bypass/rewire these stages or provide verified protected logic pull-ups as required.
-
-### Connector routing proposal
-
-**First preference:** **Reuse JS2/PTA3 for STEP and JS3/PTA2 for DIR**. These are **verified direct processor pins**. The custom transistor stages may be low-side/inverting switches, so verify electrical behavior before connecting the external driver. Bypass/rework the output stages or add appropriate pull-ups/conditioning as needed; avoid adding new processor wires unnecessarily.
-
-**Fallback:** If JS2/JS3 routing is unsuitable, consider the unallocated **IAC1A / DB37-25** and **IAC1B / DB37-27** conductors with appropriate internal jumpers/buffers. This repurposes conductors, **not** the V3.0/MS2 stepper-driver circuit.
-
-- JS2/JS3 circuits are **not in use** and need not be left alone. They may use the IAC2A/IAC2B connector conductors (29/31), **but their precise routing and suitability for logic pulses are not yet verified**.
-- Do not infer that FIDLE/DB37-30 is available for a third enable signal until fan/output configuration is traced.
-- No final connector pin assignment, external wiring, or motor-coil pinout is approved.
-
-## Alternate assignments if front-panel LED signals are unavailable
-
-Potentially use MS1's generic PTA2/X5 and PTA3/X4 (`msns-extra.h:20-25`) **if the existing added unused output circuits are driven by these signals and can be safely repurposed**. Confirm actual source wiring and remaining firmware owners; do not assume JS pad names represent CPU pins.
-
-## Design gate
-
-**Preferred logical partition:** **PTA3/JS2=STEP, PTA2/JS3=DIR**, both sourced directly from the existing MS1 socket pins and unused by the owner. Preserve **one** fan output, PTD4/PTD5 injectors, PTA0 fuel pump, tach input and analog EGO. PTA1/FIDLE is a possible optional motor-driver enable. Only the added transistor/harness circuitry, not the MCU-to-JS-pad connection, remains to be electrically validated.
-
-This is a **logical allocation**, not a verified physical wiring diagram. Resolve exact output-source traces before any hardware hookup or flash.
+- Earlier proposal: JS2/JS3 for STEP/DIR, later replaced when the owner preferred keeping transistor stages for fan/spare.
+- Second proposal: LED17/PTC0 and LED19/PTC1 for STEP/DIR. These remain alternatives, **not preferred** after confirming JS0/JS1 and JS7/JS8 availability.
+- User never authorized a firmware build by asking for design, research or GitHub documentation.
