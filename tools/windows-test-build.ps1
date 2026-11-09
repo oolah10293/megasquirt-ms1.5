@@ -100,42 +100,74 @@ Invoke-OriginalAssembler 'MS15-UNVALIDATED-TEST-IMAGE'
 # Compare map regions and ensure bootloader/calibration image remained unchanged.
 @'
 from pathlib import Path
+import sys
+
 root = Path("test-build-results")
 def parse(path):
     memory = {}
     for line in Path(path).read_text(errors="replace").splitlines():
-        line = line.strip()
         if not line.startswith("S1"):
             continue
         n = int(line[2:4], 16)
-        address = int(line[4:8], 16)
-        data = bytes.fromhex(line[8:8 + (n - 3) * 2])
-        for i, v in enumerate(data):
-            assert address + i not in memory, (path, hex(address+i))
-            memory[address+i] = v
+        raw = bytes.fromhex(line[4:])
+        assert len(raw) == n and ((n + sum(raw)) & 255) == 255, f"Bad S19 checksum: {path}"
+        a = int.from_bytes(raw[:2], "big")
+        for i, b in enumerate(raw[2:-1]):
+            assert a + i not in memory
+            memory[a+i] = b
+    assert memory, f"Empty S19: {path}"
     return memory
+
 before = parse(root / "baseline.s19")
 after = parse(root / "MS15-UNVALIDATED-TEST-IMAGE.s19")
-assert before and after
-high_before = {k:v for k,v in before.items() if k >= 0xE000}
-high_after = {k:v for k,v in after.items() if k >= 0xE000}
-assert high_before == high_after, "Bootloader or calibration pages differ from baseline assembly"
-main_keys = [k for k in after if 0x8128 <= k < 0xE000]
-assert main_keys and max(main_keys) <= 0xDFFF, "Main code extends past flash boundary"
-assert before != after, "No code delta was generated"
+shipped = parse(sys.argv[1])
+assert before == shipped, "Assembled original differs from shipped 029y4a image"
+for name in ("baseline","MS15-UNVALIDATED-TEST-IMAGE"):
+    err = (root / (name+".err")).read_text(errors="replace")
+    assert "Successful assembly - No errors." in err, f"{name} assembler reported errors: {err}"
+
+# Code must stay below E000.
+main_before = {k:v for k,v in before.items() if 0x8128 <= k < 0xE000}
+main_after = {k:v for k,v in after.items() if 0x8128 <= k < 0xE000}
+assert main_before and main_after and min(main_after) == 0x8128
+last = max(main_after)
+assert last <= 0xDFFF, f"Code overflow at {last:04X}"
+assert before != after, "No MS1.5 code changes produced"
+
+# Calibration, lookup and actual bootloader unchanged byte-for-byte.
+for lo, hi in ((0xE000,0xFAC3),(0xFB00,0x10000)):
+    assert all(before.get(k)==after.get(k) for k in range(lo,hi)), f"Protected region {lo:04X} differs"
+assert all(before.get(k)==after.get(k) for k in range(0xFAC3,0xFACA)), "Fixed vector header changed"
+allowed = set()
+relocations = 0
+for index in range(18):
+    a = 0xFACA + index*3
+    assert before.get(a)==after.get(a)==0xCC, f"JMP opcode at {a:04X} changed"
+    allowed.update((a+1,a+2))
+    target = after[a+1]*256 + after[a+2]
+    old_target = before[a+1]*256 + before[a+2]
+    assert target in main_after, f"Vector {index} target {target:04X} outside application"
+    if target != old_target: relocations+=1
+assert 0xFACA + 18*3 == 0xFB00
+high_changes = [k for k in before.keys()|after.keys() if k>=0xE000 and before.get(k)!=after.get(k)]
+assert set(high_changes).issubset(allowed), f"Unexpected high-memory differences: {high_changes}"
 report = [
-    f"Baseline S-record programmed bytes: {len(before)}",
-    f"Test S-record programmed bytes: {len(after)}",
-    f"Main-code final occupied address: 0x{max(main_keys):04X}",
-    f"Calibration/bootloader bytes >= E000: {len(high_before)} (identical)",
-    "TEST ASSEMBLY ONLY. NOT VALIDATED OR SAFE TO FLASH.",
+    "PASS: CASM08Z assembled both images without errors",
+    "PASS: Baseline is byte-for-byte identical to shipped 029y4a S19",
+    "PASS: Calibration tables and bootloader unchanged",
+    f"PASS: {relocations} interrupt vectors correctly relocated ({len(high_changes)} address-byte changes)",
+    f"Main-code end: baseline 0x{max(main_before):04X}; MS1.5 0x{last:04X}",
+    f"Net occupied program growth: {len(main_after)-len(main_before)} bytes",
+    f"Remaining contiguous flash addresses to DFFF: {0xDFFF-last}",
+    "WARNING: UNVALIDATED TEST IMAGE. DO NOT FLASH OR USE ON AN ENGINE.",
+    "Not yet tested: real-time injector timing, stack depth, IAC valve electrical/homing safety, serial and tuning compatibility."
 ]
 print("\n".join(report))
-(root / "REPORT.txt").write_text("\n".join(report) + "\n")
+(root/"REPORT.txt").write_text("\n".join(report)+"\n")
 '@ | Set-Content -Encoding ascii (Join-Path $repo 'check_built_image.py')
 Push-Location $repo
 try {
-  python .\check_built_image.py
+  python .\check_built_image.py (Join-Path $tree 'msns-extra.s19')
   if ($LASTEXITCODE -ne 0) { throw "Image-space verification failed: $LASTEXITCODE" }
 } finally { Pop-Location }
 Write-Host 'Completed test assembly. DO NOT FLASH image before actual validation.'
