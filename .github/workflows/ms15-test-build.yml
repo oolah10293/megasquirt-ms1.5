@@ -1,0 +1,29 @@
+name: MS1.5 unvalidated Windows test assembly
+
+on:
+  push:
+    branches: [ms15-test-build]
+    paths: ['.github/workflows/ms15-test-build.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-assemble:
+    name: Assemble with official CASM08Z (NEVER FLASH)
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assemble baseline and MS1.5 draft from exact 029y4a archive
+        shell: pwsh
+        run: ./tools/windows-test-build.ps1
+      - name: Preserve test-only output and assembler diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MS15-UNVALIDATED-DO-NOT-FLASH
+          path: test-build-results/
+          if-no-files-found: warn
+          retention-days: 7
