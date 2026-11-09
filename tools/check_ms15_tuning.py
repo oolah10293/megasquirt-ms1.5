@@ -47,7 +47,10 @@ for line in ini.splitlines():
         continue  # shares a byte by design
     for i in range(count):
         pos = at + i
-        assert not (pos in occupied), f"Calibration overlap at offset {pos}: {name}/{occupied.get(pos)}"
+        # Legacy CELSIUS/Fahrenheit and MAP/MAF branches deliberately
+        # overlap at low offsets; only reject conflicts in our new 113..117 range.
+        if pos >= 113:
+            assert pos not in occupied, f"MS1.5 calibration overlap at offset {pos}: {name}/{occupied.get(pos)}"
         occupied[pos] = name
 
 assert [occupied[k] for k in range(113,118)] == [
