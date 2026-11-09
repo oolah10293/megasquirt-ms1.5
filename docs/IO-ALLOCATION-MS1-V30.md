@@ -2,6 +2,21 @@
 
 **Status 2026-11-08:** Source-based **candidate design**, not verified physical wiring and not a completed continuity check. No firmware or hardware modifications performed.
 
+## 2026-11-08 — Owner's revised output preference (supersedes prior JS2/JS3 IAC preference)
+
+**Owner decision:** Keep **one** of the two previously unused owner-built **2N2222 + nominal 1 kΩ** output stages for the **single cooling fan**. Prefer **leaving the other stage untouched** if two independent IAC logic outputs can be allocated elsewhere.
+
+**Proposed assignment, NOT yet hardware-approved:** Use **JS2 / PTA3 / X4 / Output 1** and its existing transistor stage for **fan relay switching**; leave **JS3 / PTA2 / X5 / Output 2** and its existing stage **unused and intact**. The assignment of *which* stage becomes fan is a design choice, **not an owner-specified pad choice**. If the wiring favors JS3 instead, swap them.
+
+- Firmware evidence: `029y4a/src/msns-extra.h:20-25,39-43,62-78` maps JS2/PTA3, JS3/PTA2, LED17/PTC0 and LED19/PTC1.
+- **Important firmware change:** `msns-extra.asm:4971-5009` supports fan on **X2/PTA5 or LED18/PTC2**, **not JS2/PTA3**. For this design, remap the existing fan on/off/hysteresis/cranking control to whichever reused output (JS2 or JS3) is chosen. Do not merely configure 029y4a's existing X2 fan flag and expect JS2 to toggle.
+- **Proposed IAC logic signals:** LED17/**PTC0** for STEP and LED19/**PTC1** for DIR, since MS1 spark output is unused. This reverts their earlier fallback status: they are again the **preferred** candidates. Remove/gate *all active LED/ignition code writes* before giving those pins exclusive IAC control. Their existing LED output circuitry is not automatically the right interface for STEP/DIR, and **two suitable signal paths to the external driver still have to be arranged and verified**.
+- **Single fan physical circuit:** A 2N2222 may suit a small relay coil **if** its actual current, base-drive arrangement, relay supply and **flyback diode/clamp** are verified. A 1 kΩ resistor and 2N2222 identification alone do not prove relay-coil capacity or protection. **Do not switch the fan motor directly through the 2N2222** without verifying load ratings.
+- **JS3 left intact:** The other 2N2222 circuit is left wired as-is and not consumed by the IAC or fan unless future pin/hardware constraints make that necessary.
+- Preserve injector and tach/RPM paths, analog wideband input and fuel-pump output. FIDLE remains an optional enable candidate after auditing its own hardware/software role.
+
+**Engineering status:** This is the **current preferred direction**, not completed ECU wiring or firmware. No build/release/flash was requested or performed.
+
 ## Evidence and nomenclature
 
 - **Physical board:** Owner's photographs show **MegaSquirt V3.0 MB** with an original MS1 processor in the 40-pin socket (no MS2/MS3 daughtercard).
@@ -20,7 +35,11 @@
 
 The 029y4a firmware initializes both as outputs (`msns-extra.asm:898-900` sets `DDRA=$FF`). Its existing programmable output routine writes both pins (`msns-extra.asm:4609-4810`); boost control writes **PTA3** (`msns-extra.asm:9441-9447`). These writes must be removed or excluded by the MS1.5 configuration before giving those pins to STEP/DIR.
 
-## Preferred output allocation — logic pins verified, external driver wiring not verified
+## Historical candidate allocation — superseded by newer owner preference below
+
+**IMPORTANT:** The older STEP=JS2, DIR=JS3 candidate and the old table below are **superseded** by the dated preference section at the top. Use that newer section for current work.
+
+## Prior output allocation — for historical comparison only
 
 | Role | Candidate MS1 CPU signal / hardware | Existing firmware use | Proposed treatment | Confidence |
 | --- | --- | --- | --- | --- |
