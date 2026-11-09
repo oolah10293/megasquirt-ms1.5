@@ -42,9 +42,25 @@ function Invoke-OriginalAssembler([string]$name) {
   if (Test-Path $generated) { Remove-Item $generated -Force }
   Write-Host "Running original CASM08Z.EXE for $name"
   $p = Start-Process -FilePath $assembler -ArgumentList @('msns-extra.asm','S','L','I','M') -WorkingDirectory $src -PassThru
-  if (-not $p.WaitForExit(45000)) {
+  Start-Sleep -Seconds 6
+  $p.Refresh()
+  Write-Host "CASM08Z process: HasExited=$($p.HasExited), MainWindowHandle=$($p.MainWindowHandle), MainWindowTitle='$($p.MainWindowTitle)'"
+  Get-ChildItem -Path $src -File | Where-Object { $_.Name -match '(msns-extra|casm|error)' } |
+    ForEach-Object { Write-Host "At 6s: $($_.Name), $($_.Length) bytes, modified=$($_.LastWriteTimeUtc)" }
+  if (-not $p.HasExited) {
+    try {
+      $w = New-Object -ComObject WScript.Shell
+      $activated = $w.AppActivate($p.Id)
+      Write-Host "AppActivate returned: $activated"
+      if ($activated) {
+        $w.SendKeys('{ENTER}')
+        Write-Host "Sent ENTER to CASM08Z window"
+      }
+    } catch { Write-Warning "Window interaction unavailable: $($_.Exception.Message)" }
+  }
+  if (-not $p.WaitForExit(15000)) {
     $p.Kill()
-    throw "CASM08Z did not exit within 45 seconds on $name; no successful assembly"
+    throw "CASM08Z did not exit after 6-second inspection and 15-second window check on $name"
   }
   Write-Host "CASM08Z exit code: $($p.ExitCode)"
   Get-ChildItem $src | Where-Object { $_.Name -match '^(msns-extra|error|errors).*\.(s19|lst|map|err|log)$' } |
