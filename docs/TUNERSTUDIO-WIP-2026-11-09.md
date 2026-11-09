@@ -1,6 +1,6 @@
 # MS1.5 TunerStudio configuration draft — 2026-11-09
 
-**Status: Source and TunerStudio INI draft ONLY — NOT a firmware build, flash image, tested tuning project, or release.** The passing **earlier** test image has the **old 029y3 signature** and does **not** implement the following new configurable motor limits. Do not point a live ECU or the old MS1.5 test image at this new INI.
+**Historical status when this source draft was written:** This was originally not built. **Update:** A matching tuning-integrated test assembly has since **passed**; see [the current test-build report](TEST-BUILD-TUNING-2026-11-09.md). The INI has **not** been tested in TunerStudio GUI or over serial, and no ECU flashing or release has occurred. The passing **earlier** test image has the **old 029y3 signature** and does **not** implement the following new configurable motor limits. Do not point a live ECU or the old MS1.5 test image at this new INI.
 
 ## Exact input and reproducible patches
 
