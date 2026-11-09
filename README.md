@@ -2,7 +2,7 @@
 
 Modernizing an existing **MegaSquirt MS1** to run a **GM 4.3L V6 with throttle-body injection (TBI)**, focusing on better idle control, useful wideband O₂ feedback, and a better tuning experience.
 
-**Status:** Requirements recorded and **initial MS1/Extra 029y4a source audit completed** using the owner's uploaded firmware ZIP. Board-specific I/O, stepper-driver feasibility, processor headroom, and installed ECU firmware remain **unverified**. No project firmware has been written, compiled, flashed, or released.
+**Status:** Requirements and source audit complete; **provisional I/O allocation, IAC firmware/driver design, and static memory/timing budget drafted** (2026-11-08). A working IAC, verified output wiring, measured runtime timing, exact stack safety and installed ECU firmware version are **not yet established**. No MS1.5 firmware has been written, compiled, flashed, or released.
 
 ## Confirmed project requirements
 
@@ -51,6 +51,9 @@ The diagram is **conceptual**. Output assignments, driver interface, and signal 
 - [Research status and verification needs](docs/RESEARCH-NOTES.md)
 - [Verified MS1/Extra 029y4a source audit with line references](docs/SOURCE-AUDIT-029Y4A.md)
 - [Stepper IAC timing and memory feasibility plan](docs/STEPPER-FEASIBILITY-PLAN.md)
+- [Proposed MS1/V3.0 pin and output allocation](docs/IO-ALLOCATION-MS1-V30.md)
+- [IAC STEP/DIR driver and firmware design](docs/IAC-STEPPER-DESIGN.md)
+- [Source-measured RAM, flash and prospective CPU budget](docs/MS1-RESOURCE-BUDGET.md)
 - [Scope warning for uploaded MS3/V3.0 hardware manual](docs/HARDWARE-MANUAL-SCOPE.md)
 - [Actual MS1 V3.0 board photo identification](docs/BOARD-PHOTO-2026-11-08.md)
 - [Open questions / investigation checklist](docs/OPEN-QUESTIONS.md)
