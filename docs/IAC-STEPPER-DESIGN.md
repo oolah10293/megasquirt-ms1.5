@@ -1,6 +1,6 @@
 # MS1.5 — stepper IAC firmware and driver design
 
-**Status 2026-11-08:** **Proposed design, not implemented.** No firmware source modifications, assembly, release, vehicle wiring or bench testing authorized/performed. Derived from owner's uploaded **MS1/Extra 029y4a** source and physical MS1/V3.0 photographs.
+**Status 2026-11-08:** **Proposed design, not implemented.** No firmware source modifications, assembly, release, vehicle wiring or bench testing authorized/performed. **Updated after exact JS2/JS3 mapping was verified:** preferred pins are PTA3/JS2 and PTA2/JS3, not LED17/LED19. Derived from owner's uploaded **MS1/Extra 029y4a** source and physical MS1/V3.0 photographs.
 
 ## 1. Goal and deliberate reuse
 
@@ -28,8 +28,8 @@ TI timing table (datasheet §7.6):
 ### Conceptual signals (not a pin-accurate wiring diagram)
 
 ```text
-MS1 PTC0 (LED17) --[protected/conditioned output]--> STEP -------+
-MS1 PTC1 (LED19) --[protected/conditioned output]--> DIR --------+|
+MS1 PTA3 (JS2/X4) --[verify/rework output stage]--> STEP -------+
+MS1 PTA2 (JS3/X5) --[verify/rework output stage]--> DIR --------+|
 Optional FIDLE ----[appropriate low-side/logic circuit]--> nENBL |||
 MS1 signal ground -------------------------------------------+   |||
 Protected/fused automotive 12V ----------------------------+ |   |||
@@ -51,8 +51,10 @@ MS1 injector/tach/O₂/fuel pump and ONE fan output retained.
 
 ## 3. Firmware ownership and source locations
 
-- **PTC0** (candidate STEP) and **PTC1** (candidate DIR) need exclusive ownership in MS1.5. The original code still toggles them for **squirt/acceleration LEDs** and optional spark even with spark output disabled. Review all writes to `sled/aled/coila/coilb` in `portc`, notably `2616-2619, 2865-2928, 6915-6955, 9232-9252, 9457`, and the startup `sta portc` at `~902`.
-- **Do not use the original turn-all-spark-off macro unchanged**: `TurnAllSpkOff` toggles PTC0/PTC1 during stall/reset. It must hand pins to the new IAC service or force a deliberately safe, known STEP=0/DIR default only once.
+- **JS2 = PTA3 (X4 / Output 1 / boost control), JS3 = PTA2 (X5 / Output 2)** are verified by the V3.0 schematic and the supplied INI (`msns-extra.ini:1383,1389`); they are **unused on the owner's modified hardware**, so they are the **preferred STEP and DIR pins**.
+- PTA3 needs exclusive MS1.5 ownership: ordinary Output 1 writes occur at `msns-extra.asm:4699,4708`; boost PWM also writes PTA3 at `9441-9447`. PTA2 programmable Output 2 writes occur at `4777-4809`. Gate or remove these competing paths in the MS1.5 configuration.
+- `msns-extra.asm:898-900` initializes `PORTA=0` and `DDRA=$FF`; check effective STEP polarity after the user's transistor stage, pull-ups and driver input stage.
+- **PTC0/PTC1 LED17/LED19 remain a fallback**, not the preferred allocation. If that alternate is used, all LED/ignition writes and stall macros would require independent audit.
 - **Idle algorithm**: keep `idleDC` as **requested position** (0…255 units initially) rather than PWM duty. Map existing `idlecrankdc_f`, `idleclosedc_f`, `idle_dc_lo/hi`, `idlemindc_f`, `idledashdc_f` to new position semantics with updated TunerStudio definitions.
 - Reinterpret the existing `idlefreq_f` PWM-period/upper-duty setting as a **position maximum** only if all source uses are audited and the matching tuning INI is updated. No automatic compatibility with existing tunes.
 - Add `iacActualPosition`, `iacStepInterval`/divider, `iacPhase` flags, and bounded homing/reference count. A one-byte target may handle a practical operating region but may **not cover the whole documented GM mechanical travel**. The exact count widths and calibration range are still design choices.
@@ -86,8 +88,8 @@ Legacy 029y4a closed-loop idle already increases/decreases `idleDC` **one unit p
 
 ## 6. Not-yet-complete verification
 
-- Which pin/outgoing conductor drives each of the owner's **unused** JS2/JS3 custom output circuits, and whether their transistors should be **bypassed/reworked** to carry valid STEP/DIR logic rather than preserving unused auxiliary outputs.
-- Whether PTC0/PTC1 are free of other *active* non-spark modes on this board.
+- The **MS1 CPU sources are settled**: JS2=PTA3, JS3=PTA2. Still unknown: custom transistor output polarity, pull-up/level characteristics and exact DB37/harness route. Determine whether to reuse or bypass the transistor stages for valid STEP/DIR logic.
+- Ensure no competing 029y4a Output 1/Output 2/boost write paths remain in the MS1.5 configuration. PTC0/PTC1 would need a separate audit only if chosen as fallbacks.
 - Whether 029y4a `MSEC` execution and added service meet worst-case fuel-injection latency requirements.
 - Whether adequate stack/RAM can be reclaimed without overlapping the flash calibration buffer.
 - Driver enable/holding-current plan and GM valve mechanical stop/homing safety.
