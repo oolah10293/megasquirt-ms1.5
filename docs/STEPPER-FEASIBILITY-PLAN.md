@@ -11,6 +11,12 @@
 5. **Other timer uses:** `msns-extra.asm:946+` configures TIM1 for injector current-limiting PWM; TIM2 CH1 is configured for spark at `msns-extra.asm:930-940` and has handler `SPARKTIME` at `msns-extra.asm:9863+`. Since spark is not required in this application, some code/I/O may be reusable, but its interrupt and state dependencies must be audited before removing anything.
 6. **Existing idle logic:** `msns-extra.asm:5391-5546` computes a PWM idle demand `idleDC` from temperature/RPM/startup/dashpot behavior. `msns-extra.asm:9370-9406` turns that value into PWM at FIDLE. Source inspection does **not** establish stepper support.
 
+## Static findings and design produced since this plan
+
+- [MS1/V3.0 logical output allocation](IO-ALLOCATION-MS1-V30.md): PTC0/PTC1 are candidate motor signals; one fan and JS2/JS3 existing outputs reserved.
+- [Proposed IAC firmware and driver](IAC-STEPPER-DESIGN.md): driver STEP/DIR, no blocking delays, and candidate 1 ms MSEC scheduler. No implementation yet.
+- [Source-derived RAM/flash/timing arithmetic](MS1-RESOURCE-BUDGET.md): 210 bytes of application DS declarations, a 200-byte buffer, **19-address gap before stack initialization**, and 1,145 unoccupied main-code addresses. The gap is **not usable extra stack-safe variable space**. No actual timing performance verified.
+
 ## Proposed proof in stages
 
 ### Stage 1: Static capacity and timing audit — no build
