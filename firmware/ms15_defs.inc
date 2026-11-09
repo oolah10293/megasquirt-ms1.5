@@ -23,14 +23,13 @@ MS15_HOMING         equ 0  ; reference count in progress
 MS15_STEP_HIGH      equ 1  ; STEP asserted on PTA5
 MS15_DIR_OPEN       equ 2  ; PTA4 is in the opening direction
 MS15_TICK           equ 3  ; 1 ms interrupt published a new tick
+MS15_INIT_DONE      equ 4  ; new page-9 homing value loaded once after boot
 
-; *** BENCH CALIBRATION VALUES ONLY. NOT APPROVED FOR A VALVE. ***
-; Full-step driver, 2 motor steps for each unit of the old idleDC demand.
-; These numbers require actual GM IAC valve testing before connecting hardware.
-MS15_MAX_H          equ $01   ; 0x0140=320 steps, TEMPORARY
-MS15_MAX_L          equ $40
-MS15_HOME_H_INIT    equ $01   ; 0x0168=360 closing pulses, TEMPORARY
+; *** BENCH ONLY; actual valve limits unverified. ***
+; Page-9 flash fields now define step-low delay, homing steps and max travel.
+; First service pass reloads homing from flash, overriding the old boot
+; placeholders that remain in the original integration patch.
+MS15_HOME_H_INIT    equ $01   ; old boot placeholder, then overwritten
 MS15_HOME_L_INIT    equ $68
-MS15_BOOT_DELAY     equ 2T    ; 1 ms tick phases, initially inhibited
-MS15_LOW_DELAY      equ 4T    ; >=4 published low phases between pulses
-MS15_HIGH_DELAY     equ 1T    ; >=2 tick events before STEP drops
+MS15_BOOT_DELAY     equ 2T
+MS15_HIGH_DELAY     equ 1T    ; held high through >=2 serviced ticks
