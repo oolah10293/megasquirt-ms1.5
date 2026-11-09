@@ -139,7 +139,7 @@
 -        lda     feature6_f
 -        bit     #BoostDirb
 -        bne     bcSetout
--;        brset   BoostDir,feature6,bcClrout	; Change dir for high
+-;        brset   BoostDir,feature6,bcSetout	; Change dir for high
 -					; pulsewidth reduce boost
 -        bra     bcClrout
 -
