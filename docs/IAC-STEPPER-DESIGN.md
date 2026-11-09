@@ -86,7 +86,7 @@ Legacy 029y4a closed-loop idle already increases/decreases `idleDC` **one unit p
 
 ## 6. Not-yet-complete verification
 
-- Which pin/outgoing conductor actually drives each of the owner's JS2/JS3 custom outputs.
+- Which pin/outgoing conductor drives each of the owner's **unused** JS2/JS3 custom output circuits, and whether their transistors should be **bypassed/reworked** to carry valid STEP/DIR logic rather than preserving unused auxiliary outputs.
 - Whether PTC0/PTC1 are free of other *active* non-spark modes on this board.
 - Whether 029y4a `MSEC` execution and added service meet worst-case fuel-injection latency requirements.
 - Whether adequate stack/RAM can be reclaimed without overlapping the flash calibration buffer.
