@@ -6,7 +6,7 @@
 
 - **Board revision marked on PCB silkscreen:** `MegaSquirt V3.0 MB` (right board edge in supplied orientation). This establishes the *mainboard* revision from the actual hardware, not an assumption based on a downloaded manual.
 - **Processor:** Large, directly mounted/socketed 40-pin Motorola/Freescale device; the package marking appears to begin `MC68HC908GP32`, consistent with MS1. The remaining package suffix is faint. **No MS2/MS3-style processor daughtercard is present.**
-- **Visible rework/custom additions:** The lower-right `Proto Area` has two small black three-lead packages (likely transistors, but specific parts not identified) and two vertically mounted axial resistors, with **red and white wires** attached. The wires run along the right side towards the upper connector area.
+- **Visible rework/custom additions:** The lower-right `Proto Area` has two small black three-lead devices, two vertically mounted axial resistors, and **red and white wires** running along the right side towards the upper connector area. **Owner later identified the two devices as 2N2222 NPN transistors and the resistors as gold–red–black–brown bands (read backwards as brown–black–red–gold = nominally 1 kΩ ±5%).** The precise electrical connections are not yet traced.
 - Some additional hand-soldered/jumper work is visible near the central `U7` / `R44` area. Its electrical function is **not established** from the photograph.
 - The original board edge has three LED indicators (`D14`, `D15`, `D16` nearby silkscreen).
 - The connector arrangement and input/output circuits visibly match the *general style* of a MegaSquirt V3.0 mainboard.
@@ -17,13 +17,13 @@
 
 **Exact pad mapping now verified:** The V3.0 CPU schematic (https://www.megamanual.com/ms2/megasquirt_ShemV3.00.pdf, sheet 1) shows **JS2 wired directly to DIP-40 socket pin 36 (MS1 PTA3)** and **JS3 to pin 35 (MS1 PTA2)**. `029y4a/msns-extra.ini:1383,1389` explicitly identifies **Output 1 (X4/JS2)** and **Output 2 (X5/JS3)**. The owner's two added stages are connected to these pads and are unused. For an MS2 daughtercard those same pins have *different functions* (IAC2A/2B); MS1 has no internal motor-driver electronics. **Do not mistake socket-to-pad continuity for verified DB37 harness routing or transistor electrical suitability.**
 
-**Owner update:** Both added JS2/JS3 output circuits are **unused**. They are directly driven from **PTA3/Output 1** and **PTA2/Output 2**, respectively, based on the confirmed PCB pad map; these MCU channels are candidate IAC STEP/DIR outputs. **Still unresolved:** Exact added transistor stage topology and part numbers, connector/harness routing, output polarity and suitability as driver logic inputs.
+**Owner update:** Both added JS2/JS3 output circuits are **unused**. They are directly driven from **PTA3/Output 1** and **PTA2/Output 2**, respectively, based on the confirmed PCB pad map. Owner subsequently identified **2N2222 NPN transistors** and **1 kΩ ±5% (brown–black–red–gold) resistors**. These MCU channels remain candidate IAC STEP/DIR outputs. **Still unresolved:** transistor emitter/base/collector wiring, whether each 1 kΩ resistor is in the base drive or elsewhere, external connector routing, output polarity and suitability as driver logic inputs.
 
 The rear photograph and owner's clarification supersede the earlier request below for an underside picture.
 
 ## Explicitly NOT concluded from this photograph
 
-- The two proto-area stages are **confirmed unused by the owner**; their previous intended functions, transistor part numbers and resistor values cannot be verified from the front image alone. The one required fan output must be allocated independently.
+- The two proto-area stages are **confirmed unused by the owner**. **Their components have now been identified by the owner as 2N2222 NPN transistors and gold–red–black–brown resistors (nominally 1 kΩ ±5% when read from brown end).** These values are owner-supplied/component-code interpreted, **not independently measured**. The one required fan output must be allocated independently.
 - **One fan output** remains the owner's confirmed *requirement*, not proof of which physical circuit controls it.
 - **Updated with schematic + firmware verification:** The two owner-added outputs connect to **JS2 (PTA3/X4/Output 1)** and **JS3 (PTA2/X5/Output 2)**. The **downstream circuitry and external-load connections** remain unverified.
 - The small resistors on the proto area are not evidence of the owner's separate claimed injector-current-limiting resistors; that purpose and the resistor inventory remain unverified.
