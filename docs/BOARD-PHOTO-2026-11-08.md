@@ -17,13 +17,13 @@
 
 **Important pad distinction:** The V3.0 mainboard's **JS2/JS3 solder pads** are not inherently the same thing as the **original MS1 MCU's port pins**. The MegaSquirt V3.0 assembly guide documents JS2 and JS3 as the **MS2** stepper-channel 2A/2B interface, optionally jumpered to DB37 pins **29 and 31**, respectively (https://www.megamanual.com/ms2/V3assemble.htm). That published MS2 routing **does not demonstrate** that this MS1 PCB has active MS2-style stepper drivers or that the user's two added circuits use those DB37 pins. We must distinguish what **feeds** those custom circuits from what pad or connector they **terminate** at.
 
-**Still unresolved:** Which existing software outputs command the two circuits; what external signals/loads each controls (including the requested single fan); exact component part numbers; whether they can be retained when assigning stepper STEP/DIR signals. Do not count JS2 and JS3 as proven spare MCU outputs or as ready-to-drive IAC motor connections without tracing.
+**Owner update:** Both added JS2/JS3 output circuits are **unused**. They are **not required to be preserved** and are candidates for repurposing as external IAC STEP/DIR signal paths. **Still unresolved:** Their MCU driving signals, external routing, transistor identities, levels, polarity and suitability as stepper-driver logic inputs. Do not mistake unused physical circuits for verified spare MCU outputs.
 
 The rear photograph and owner's clarification supersede the earlier request below for an underside picture.
 
 ## Explicitly NOT concluded from this photograph
 
-- The two proto-area stages are **not identified as fan outputs**. They may be relevant to the owner's earlier output additions, but their functions, transistor part numbers and resistor values cannot be verified from the front image alone.
+- The two proto-area stages are **confirmed unused by the owner**; their previous intended functions, transistor part numbers and resistor values cannot be verified from the front image alone. The one required fan output must be allocated independently.
 - **One fan output** remains the owner's confirmed *requirement*, not proof of which physical circuit controls it.
 - **Updated by owner:** The two added outputs connect to **JS2 and JS3**. Their originating MCU/control signals and downstream external-load connections remain unverified by a complete trace.
 - The small resistors on the proto area are not evidence of the owner's separate claimed injector-current-limiting resistors; that purpose and the resistor inventory remain unverified.
@@ -33,7 +33,7 @@ The rear photograph and owner's clarification supersede the earlier request belo
 ## Relevance to MS1.5 design
 
 1. The **V3.0 mainboard revision is now physically confirmed**. Obtain the MS1/V3.0-specific mainboard schematic for exact trace and connector mapping.
-2. The **two custom outputs terminate at JS2 and JS3**, per owner. The remaining unknown is which MCU/control signals feed these circuits, where they leave the board, and which load each serves.
+2. The **two custom outputs connect to JS2 and JS3 and are unused**, per owner. Consider reusing or rewiring their conductors/circuits for IAC STEP/DIR; their signal origin, polarity and destination still require an electrical trace.
 3. Candidate fan/IAC outputs should be selected only after tracing these custom connections and the original MS1 port assignments from the 029y4a source (`docs/SOURCE-AUDIT-029Y4A.md`).
 4. **Next analysis:** Trace these output circuits from the processor-side signal source through the driver transistors to JS2/JS3 and/or external connector. The underside photograph is now supplied; no additional photo should be requested merely to establish that it exists.
 
