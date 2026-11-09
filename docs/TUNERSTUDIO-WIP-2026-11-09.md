@@ -1,6 +1,6 @@
 # MS1.5 TunerStudio configuration draft — 2026-11-09
 
-**Historical status when this source draft was written:** This was originally not built. **Update:** A matching tuning-integrated test assembly has since **passed**; see [the current test-build report](TEST-BUILD-TUNING-2026-11-09.md). The INI has **not** been tested in TunerStudio GUI or over serial, and no ECU flashing or release has occurred. The passing **earlier** test image has the **old 029y3 signature** and does **not** implement the following new configurable motor limits. Do not point a live ECU or the old MS1.5 test image at this new INI.
+**Historical status when this source draft was written:** This was originally not built. **Update:** A matching tuning-integrated test assembly has since **passed**; see [the current test-build report](TEST-BUILD-TUNING-2026-11-09.md). The INI has now been **partially tested in TunerStudio GUI**: the custom project, IAC dialog and fan dialog render, but their calibration fields show invalid-looking values. **Serial and calibration round-trip remain untested**, and no ECU flashing or release has occurred. See [offline GUI observations](TUNERSTUDIO-OFFLINE-UI-2026-11-09.md). The passing **earlier** test image has the **old 029y3 signature** and does **not** implement the following new configurable motor limits. Do not point a live ECU or the old MS1.5 test image at this new INI.
 
 ## Exact input and reproducible patches
 
@@ -33,7 +33,7 @@ TunerStudio's developer confirmed that the controller signature selects the INI 
 | `iacHomeSteps` | 114–115 | `E872–E873` | U16 big endian, 1..510 | **360 closing steps** |
 | `iacMaxSteps` | 116–117 | `E874–E875` | U16 big endian, 0..510 | **320 maximum open steps** |
 
-The original table is **113 bytes** and has a fixed 189-byte serial tuning page. The source extension makes it **118 bytes**, still under 189. Static checks of original INI fields found **no overlap** at offsets 113–117. GUI fields are intentionally **not tested in TunerStudio yet**.
+The original table is **113 bytes** and has a fixed 189-byte serial tuning page. The source extension makes it **118 bytes**, still under 189. Static checks of original INI fields found **no overlap** at offsets 113–117. GUI fields were **subsequently observed in TunerStudio offline** (both custom dialogs render), but the displayed values are **not valid or verified**; see [UI observations](TUNERSTUDIO-OFFLINE-UI-2026-11-09.md).
 
 The motor state machine clamps a zero homing count to one and values above 510 to 510 at startup; a step-low delay below 2 is clamped to 2 milliseconds. Those guardrails are **not evidence that 510 steps or 2 ms are mechanically/electrically safe for this GM valve**.
 
