@@ -5,7 +5,7 @@
 ## Evidence and nomenclature
 
 - **Physical board:** Owner's photographs show **MegaSquirt V3.0 MB** with an original MS1 processor in the 40-pin socket (no MS2/MS3 daughtercard).
-- **Owner's clarification (2026-11-08):** Two added transistor/resistor output stages connect to **JS2 and JS3**, and **both are currently unused**. Those pads are **already directly wired to original MS1 MCU output pins**, established below. The added *transistor circuits'* voltage levels, output polarity and external connector destinations still require verification.
+- **Owner's clarification (2026-11-08):** Two added output stages connect to **JS2 and JS3**, and **both are unused**. Each uses an owner-identified **2N2222 NPN transistor** and a resistor with **gold–red–black–brown** bands, interpreted as **1 kΩ ±5%** read from the brown end. The pads are direct MS1 MCU outputs. Whether these are common-emitter low-side stages, which node the resistors connect to, the transistor outputs' voltage levels/polarity and external connector destinations remain unverified.
 - **Original processor mapping:** The uploaded `029y4a/src/msns-extra.h:19-80` maps MS1 CPU ports; these are **not** the MS3 CPU-to-JS-pad assignments in the uploaded MS3 hardware guide.
 - **V3.0 connector routing:** The official V3.0 assembly guide identifies JS0–JS3 as **jumper pads**, normally connected to the IAC-labelled DB37 connector signals in **MS2 configurations** (JS0→IAC1A/DB37-25, JS1→IAC1B/DB37-27, JS2→IAC2A/DB37-29, JS3→IAC2B/DB37-31). This **does not create MS2 stepper motor outputs on an MS1**; it identifies available routing options, subject to the actual board's jumpering. Source: https://www.megamanual.com/ms2/V3assemble.htm
 
@@ -42,7 +42,7 @@ They **are** PTA3 and PTA2 on the MS1, directly. We do **not** need to wire sepa
 - **PTA3 / JS2 / X4:** `Output1` and `boostP` share port A bit 3 (`msns-extra.h:66,70`). Disable or gate existing programmable Output 1 and boost PWM writes.
 - **PTA2 / JS3 / X5:** `Output2` is port A bit 2 (`msns-extra.h:65`). Disable or gate programmable Output 2 writes.
 - Initialize STEP low and DIR to a defined level; existing `clr porta` at reset is present but must be checked against the external circuit's inversion and pull-up behavior.
-- Do not assume the two added transistor output stages are push-pull logic drivers; their output polarity/voltage needs inspection before a STEP/DIR interface is electrically specified.
+- The confirmed **2N2222 NPN** parts are capable of low-side switching, but the observed components **do not by themselves prove common-emitter/open-collector wiring**. If so, outputs are **inverting and require a suitable pull-up** for logic-high; resistor placement and current paths must be checked. A **1 kΩ** resistor could be a base resistor, but that is **unverified**, not a confirmed output pull-up. The planned DRV8825 has internal pull-*downs* on STEP and DIR (TI datasheet), so relying on the driver alone would **not** supply the high level for an open-collector connection. Bypass/rewire these stages or provide verified protected logic pull-ups as required.
 
 ### Connector routing proposal
 
