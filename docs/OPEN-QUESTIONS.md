@@ -13,7 +13,16 @@
 - [ ] Check whether this 029y4a baseline matches the firmware on the physical ECU; otherwise choose and document a replacement baseline.
 - [ ] Establish source licensing and appropriate attribution before adding third-party firmware source files to this public repository.
 
-## Current preferred I/O partition (updated by owner, November 8, 2026)
+## Complete JS-pad verification and current I/O proposal
+
+- [x] [Map JS0–JS11](JS-PAD-MAP-MS1-V30.md) to the MS1 MCU using physical V3.0 schematic and owner-uploaded 029y4a source.
+- [x] Confirm **JS0/PTA5 and JS1/PTA4 are digital outputs**, and **JS7/PTC3 and JS8/PTC4** are other output candidates. JS4/JS5 are analog-capable; JS6 is reset; JS9-11 generally inputs by default.
+- [x] Update candidate plan to **JS0=IAC STEP, JS1=IAC DIR, JS2=fan via one existing 2N2222, JS3=untouched spare** (fan pad choice remains provisional).
+- [ ] Select JS0/JS1 versus JS7/JS8 from detailed firmware write-path and external routing analysis.
+- [ ] Gate legacy water/nitrous/fan/tach writers to JS0/JS1; remap fan logic to JS2 or JS3.
+- [ ] Verify physical driver interface and actual fan relay current/flyback protection; confirm target IAC valve electrical characteristics.
+
+### Historical earlier preferred I/O partition (superseded)
 
 - [x] Owner wants **one existing 2N2222 stage retained for fan relay**, and the other left intact where possible.
 - [x] Preferred provisional pin allocation: **fan=JS2/PTA3** (choice of stage still reversible), **JS3/PTA2 spare**, **IAC STEP=LED17/PTC0**, **IAC DIR=LED19/PTC1**.
