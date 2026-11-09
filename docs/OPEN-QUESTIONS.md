@@ -2,6 +2,19 @@
 
 **Updated 2026-11-08 after direct firmware source inspection.** Completed checks below are evidenced in [SOURCE-AUDIT-029Y4A.md](SOURCE-AUDIT-029Y4A.md).
 
+## Latest source work — 2026-11-08
+
+- [x] Write original, **unbuilt** MS1.5 stepper assembly routine, direct-page variable aliases and 029y4a integration patch; [source work record](FIRMWARE-WIP-2026-11-08.md).
+- [x] Source-only check: JS0/JS1 have exclusive motor writers after integration patch; JS2 has only the fan on/off writes; JS3 is not reassigned.
+- [x] Source-only check: all eight aliased RAM state bytes are within direct page (including correction: `n2ohold` **is not**, at 0x010C), no new DS allocations, and simple new routine branch-span estimate passed.
+- [x] The committed CRLF-native patch was confirmed byte-for-byte identical to the locally dry-run patch against the actual user-uploaded original source.
+- [ ] Update and validate tuning INI, signature, invalid-feature handling, idle units and serial diagnostics before any live use.
+- [ ] Confirm IAC valve coil wiring, driver power/enable/reset circuitry, allowable motor travel and position direction; current **320/360 steps** are unverified bench placeholders.
+- [ ] Establish actual fan relay current/base drive/flyback diode suitability with the owner-built 2N2222 circuit.
+- [ ] **Only after explicit build authorization:** assemble, review ROM/stack/timer maps, and bench test with injector/tach/serial/fan activity. No build yet.
+
+The older discussion below includes superseded pin-allocation proposals; the [current pin map](IO-ALLOCATION-MS1-V30.md) and [source implementation log](FIRMWARE-WIP-2026-11-08.md) control.
+
 ## Initial source identification / feature audit
 
 - [x] Inspect the uploaded **MS1/Extra 029y4a** assembly source, MCU header and tuning INI.
@@ -70,4 +83,4 @@
 
 ## Immediate next engineering task
 
-**The exact JS2/JS3 processor mapping is established**, and the preferred STEP/DIR assignment now uses these unused outputs directly. Next verify added transistor/output electrical behavior and external connector routing; isolate PTA3/PTA2 from legacy output/boost code and estimate step service cycles. Actual fit/jitter requires an **explicitly authorized test build and subsequent bench measurement**.
+**The actual unbuilt WIP assembly is now in GitHub** for JS0 STEP, JS1 DIR, JS2 fan and JS3 spare. The most important next tasks are a **source/INI compatibility and safety review**, valve-driver electrical calibration and, only after an explicit new **build authorization**, assembly/map inspection and oscilloscope testing. See [current source record](FIRMWARE-WIP-2026-11-08.md).
