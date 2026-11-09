@@ -18,7 +18,8 @@
 - [ ] Obtain **MS1-specific** PCB/connector/schematic references and confirm board revision.
 - [ ] Trace physical output modifications already made; locate existing fan output (only one needed).
 - [x] **Verified actual V3.0 pad-to-CPU mapping:** **JS2→PTA3/X4/Output 1**; **JS3→PTA2/X5/Output 2** (official schematic, supplied 029y4a header and `msns-extra.ini:1383,1389`). Owner confirms both custom circuits unused. **Preferred allocation is now JS2=STEP, JS3=DIR**, with electrical stages to be validated. See [I/O allocation](IO-ALLOCATION-MS1-V30.md).
-- [ ] Verify the existing **JS2/JS3 transistor stage polarity, external conductor/connector routing and driver logic levels**; eliminate competing **Output 1/Output 2/boost** writes in the MS1.5 code. The original MCU socket-to-JS-pad mapping is already established.
+- [x] Owner identified **2N2222 NPNs** and **gold–red–black–brown resistors** (nominally **1 kΩ ±5%**) in the two unused JS2/JS3 driver stages.
+- [ ] Verify the **2N2222 emitter/base/collector connections**, resistor placement, output polarity, external conductor/connector routing, and compatible STEP/DIR logic levels; eliminate competing **Output 1/Output 2/boost** writes. The original MCU socket-to-JS-pad mapping is already established.
 - [ ] Determine a feasible IAC stepper driver interface from the actual valve's electrical requirements.
 - [x] Identify the 100 µs TIM2 timebase and existing **1 ms MSEC** service as the candidate IAC state-machine insertion point; see [firmware design](IAC-STEPPER-DESIGN.md).
 - [ ] Determine real worst-case execution time and injector jitter once a separate **test build is explicitly authorized**; static sources alone cannot prove this.
