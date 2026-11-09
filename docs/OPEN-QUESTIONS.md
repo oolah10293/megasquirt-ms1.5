@@ -2,6 +2,13 @@
 
 **Updated 2026-11-08 after direct firmware source inspection.** Completed checks below are evidenced in [SOURCE-AUDIT-029Y4A.md](SOURCE-AUDIT-029Y4A.md).
 
+## Windows test build completed — 2026-11-09
+
+- [x] **Original 029y4a baseline and MS1.5 source both assembled with CASM08Z v3.14, no errors.** See [test report](TEST-BUILD-2026-11-09.md).
+- [x] Verify byte-for-byte baseline with shipped S19 and unchanged bootloader/calibration pages; 17 relocated interrupt vectors valid, net code growth **47 bytes**, **1,098** remaining address slots before DFFF.
+- [ ] Actual bench injector/timer jitter and stack high-water validation; verify fan coil and IAC electrical safety, travel and fault recovery.
+- [ ] Update the TunerStudio INI, firmware signature and idle-position tuning semantics before flashing to hardware.
+
 ## Latest source work — 2026-11-08
 
 - [x] Write original, **unbuilt** MS1.5 stepper assembly routine, direct-page variable aliases and 029y4a integration patch; [source work record](FIRMWARE-WIP-2026-11-08.md).
