@@ -25,7 +25,13 @@
 - Determine injector type, impedance and peak/hold or limiting arrangement **before** specifying resistors or driver setup.
 - Preserve deterministic injection timing and safe reset/boot behavior.
 
-### 2026-11-08 newer output decision — supersedes the original STEP/DIR allocation
+### Latest provisional allocation after checking all V3.0 JS pads — 2026-11-08
+
+**Schematic/source verified:** JS0=PTA5/X2, JS1=PTA4/X3, JS2=PTA3/X4, JS3=PTA2/X5; JS7/PTC3 and JS8/PTC4 are additional possible digital outputs. See [complete pad map](JS-PAD-MAP-MS1-V30.md).
+
+**Current design preference (not yet built or final):** **JS0/PTA5=IAC STEP, JS1/PTA4=IAC DIR; JS2/PTA3=one existing 2N2222 fan-relay output; JS3/PTA2=unused spare 2N2222**. The owner wants one transistor stage for the fan and the other intact; JS2 versus JS3 for the fan remains a proposed choice. Repurpose the source's native fan routine (normally X2/PTA5 or LED18) to the selected transistor output, and remove competing code writes on the IAC pins. JS7/JS8 are a fallback pair. **JS6 is reset; never connect JS9 to 12 V with an MS1.**
+
+### Prior output decision — now superseded
 
 **Owner preference:** Use **one existing JS2/JS3 2N2222 + nominal 1 kΩ transistor circuit for the single fan relay**, and **leave the other circuit alone** if the MS1 has separate outputs for IAC. **Current provisional design:** JS2/PTA3 as fan, JS3/PTA2 untouched, **PTC0/LED17 as STEP, PTC1/LED19 as DIR**. Owner did not specify whether JS2 or JS3 should be fan; switch them if physical routing favors it.
 
