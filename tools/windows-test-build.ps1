@@ -95,6 +95,17 @@ try {
   if ($LASTEXITCODE -ne 0) { throw "TunerStudio INI patch failed with exit code $LASTEXITCODE" }
 } finally { Pop-Location }
 
+# Fuel-only source transform and menu cleanup. Owner explicitly authorized
+# a test assembly on 2026-11-10; this job NEVER flashes hardware.
+$env:MS15_ORIGINAL_ZIP = $zip
+$env:MS15_TUNING_INI = Join-Path $tree 'msns-extra.ini'
+python -m unittest discover -s (Join-Path $repo 'tests') -p 'test_ms15_fuel_only_full.py' -v
+if ($LASTEXITCODE -ne 0) { throw "Fuel-only regression suite failed before transformation: $LASTEXITCODE" }
+python (Join-Path $repo 'tools\remove_ms15_ignition_full.py') (Join-Path $src 'msns-extra.asm')
+if ($LASTEXITCODE -ne 0) { throw "Fuel-only ignition removal failed: $LASTEXITCODE" }
+python (Join-Path $repo 'tools\simplify_ms15_fuel_only_ini.py') (Join-Path $tree 'msns-extra.ini')
+if ($LASTEXITCODE -ne 0) { throw "Fuel-only INI cleanup failed: $LASTEXITCODE" }
+
 # Run only STATIC checks: no hardware interaction.
 python (Join-Path $repo 'tools\check_ms15_source.py') $src
 if ($LASTEXITCODE -ne 0) { throw "Static checker failed: $LASTEXITCODE" }
@@ -102,8 +113,8 @@ python (Join-Path $repo 'tools\check_ms15_tuning.py') $tree
 if ($LASTEXITCODE -ne 0) { throw "Tuning/source consistency checker failed: $LASTEXITCODE" }
 
 # This is a TEST INI, not a release or a verified TunerStudio GUI configuration.
-Copy-Item (Join-Path $tree 'msns-extra.ini') (Join-Path $results 'MS15-TUNING-UNVALIDATED.ini') -Force
-Invoke-OriginalAssembler 'MS15-UNVALIDATED-TEST-IMAGE'
+Copy-Item (Join-Path $tree 'msns-extra.ini') (Join-Path $results 'MS15-FUEL-ONLY-BENCH-UNVALIDATED.ini') -Force
+Invoke-OriginalAssembler 'MS15-FUEL-ONLY-BENCH-UNVALIDATED'
 
 # Compare map regions and ensure bootloader/calibration image remained unchanged.
 @'
@@ -127,10 +138,10 @@ def parse(path):
     return memory
 
 before = parse(root / "baseline.s19")
-after = parse(root / "MS15-UNVALIDATED-TEST-IMAGE.s19")
+after = parse(root / "MS15-FUEL-ONLY-BENCH-UNVALIDATED.s19")
 shipped = parse(sys.argv[1])
 assert before == shipped, "Assembled original differs from shipped 029y4a image"
-for name in ("baseline","MS15-UNVALIDATED-TEST-IMAGE"):
+for name in ("baseline","MS15-FUEL-ONLY-BENCH-UNVALIDATED"):
     err = (root / (name+".err")).read_text(errors="replace")
     assert "Successful assembly - No errors." in err, f"{name} assembler reported errors: {err}"
 
