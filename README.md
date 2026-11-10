@@ -1,5 +1,8 @@
 # MegaSquirt MS1.5
 
+> **Active fuel-only source cleanup (2026-11-10, development branch):** The current goal is to **physically remove ignition-exclusive firmware**, not override `personality` at runtime. See [the source-verified ignition-removal audit](docs/IGNITION-REMOVAL-2026-11-10.md) and [current handoff](docs/CURRENT-HANDOFF.md). Stage one has a committed source transformation and original-source regression tests; it deletes the spark lookup and ignition-mode validation but **does not yet remove ignition ISR/output code**. This work is **unbuilt and not flashable**. The previous RAM-fix S19/INI are unmodified, verified existing artifacts. No new build/flash authorization exists.
+
+
 > **Current handoff (2026-11-10):** Read [active engineering handoff](docs/CURRENT-HANDOFF.md) **before further changes**. It records the current Git checkpoints, the unresolved fuel-only spark-configuration restriction, the interrupted Work task, and the required incremental source-control workflow. Later owner-reported Stim testing is not yet fully reflected in the older status paragraphs below. No firmware change or build is authorized by this note.
 
 Modernizing an existing **MegaSquirt MS1** to run a **GM 4.3L V6 with throttle-body injection (TBI)**, focusing on better idle control, useful wideband O₂ feedback, and a better tuning experience.
