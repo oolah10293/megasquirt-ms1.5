@@ -4,6 +4,16 @@ Updated: 2026-11-10. This is a **documentation-only checkpoint**. It does not au
 
 **Read this file, the current Git history, and relevant code before proceeding. Do not rely on conversation memory for the project state.**
 
+## NEWER: AUTHORIZED FUEL-ONLY TEST ASSEMBLY SUCCEEDED (2026-11-10)
+
+The user **explicitly authorized building** the 029y4a-based dedicated fuel-only firmware while preserving the original 12x12 fuel/AFR features; this overrides older statements below that no build was authorized. It does **not** authorize flashing, packaging a release, or vehicle use.
+
+**Verified latest test build:** GitHub Actions [run 42921957431](https://github.com/oolah10293/megasquirt-ms1.5/actions/runs/42921957431), branch `ms15-test-build` at exact source commit `3e8e80e2d96a9c7005d76107646cdce5a91ccf41`, PASS. [Build audit, SHA-256 hashes, preserved features and limitations](FUEL-ONLY-BUILD-2026-11-10.md). The two prior source-change builds failed on unsupported extended-address syntax and were corrected before this successful run.
+
+**Results:** original and new CASM08Z assembly passed with no errors, both static source/tuning checkers passed, new five-test fuel-only regression suite passed, original calibration/bootloader unchanged except 5 new IAC bytes, spark IRQ vector points to Dummy, ignition-only runtime and spark-output configuration check removed. Occupied program-code change was -11,724 bytes versus **original 029y4a**; never mistake that for a runtime test. Two downloaded artifacts (S19 and INI) are **unvalidated bench images only**; no flash has occurred.
+
+The project should continue from the **full physical removal** script `tools/remove_ms15_ignition_full.py`, not earlier stage-one or personality isolation. The new build is a development/bench baseline, not a final release. Retain advanced fuel features and current RAM, fan, STEP/DIR decisions. Next authorization boundary is flash/Stim testing, which has **not** been given.
+
 ## ACTIVE SOURCE-ONLY IGNITION-REMOVAL CHECKPOINT (November 10, 2026)
 
 **Read [the new fuel-only removal audit](IGNITION-REMOVAL-2026-11-10.md) before editing.** The project's objective is now explicitly to **remove ignition-exclusive firmware**, not to force a zero runtime ignition-personality setting. This supersedes the earlier narrow workaround design below.
