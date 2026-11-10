@@ -48,6 +48,9 @@ class FuelOnlyFirmwareSource(unittest.TestCase):
         self.assertIn('sta     iTimeH',self.result)
         self.assertIn('sta     iTimeL',self.result)
         self.assertIn('jmp     squirtCheck1',self.result)
+        # T2CurrX is in extended RAM, so direct INC cannot reach it.
+        self.assertNotRegex(self.result, r'(?im)^\s*inc\s+T2CurrX\b')
+        self.assertRegex(self.result, r'(?im)^\s*lda\s+T2CurrX\s+add\s+#1\s+sta\s+T2CurrX\b')
         self.assertIn('bclr    config_error,feature2',self.result)
 
     def test_deleted_asm_symbols_are_not_referenced(self):
