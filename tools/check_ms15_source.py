@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+"""AI/AGENT HANDOFF: Read docs/CURRENT-HANDOFF.md and AGENTS.md and
+inspect current Git commits before editing. This script is source-only;
+do not build or flash firmware without explicit owner authorization.
+"""
 """Source-only MS1.5 checks. NOT an assembler or firmware build.
 
 Usage: python tools/check_ms15_source.py /path/to/extracted/029y4a/src
