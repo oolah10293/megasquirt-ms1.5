@@ -8,7 +8,7 @@
 - Base: independently SHA-matched original MS1/Extra 029y4a ZIP, with 3 existing MS1.5 integration / tuning patches. Original B&G 2.986 fuel-only source was reviewed as architecture reference; the modern feature-rich **029y4a remains the implementation basis**, not B&G.
 - Source-only dev: `ms15-ignition-removal` branch, `tools/remove_ms15_ignition_full.py`, `tools/simplify_ms15_fuel_only_ini.py`, `tests/test_ms15_fuel_only_full.py`. The previous `ms15-fuel-only-config` personality override was **not used**.
 - Reproducible assembly branch commit: **`3e8e80e2d96a9c7005d76107646cdce5a91ccf41`** on `ms15-test-build`. [GitHub Actions run 42921957431](https://github.com/oolah10293/megasquirt-ms1.5/actions/runs/42921957431) **completed successfully** with CASM08Z; its artifact **MS15-FUEL-ONLY-UNVALIDATED-DO-NOT-FLASH** contains the S19, matching INI, source listing, assembler error logs, baseline S19 and REPORT.
-- Two earlier assembly attempts failed for unsupported direct-address INC/MOV/DEC instructions on extended RAM variables in the new tach path. Corrected increment, 24-bit timestamp copies, and extended-RAM idle/staging counters and added regression assertions. Only the above final run passed.
+- Three earlier assembly attempts failed for unsupported direct-address INC/MOV/DEC instructions on extended RAM variables in the new tach path. Corrected increment, 24-bit timestamp copies, and extended-RAM idle/staging counters and added regression assertions. Only the above final run passed.
 
 ## Source features and constraints
 
