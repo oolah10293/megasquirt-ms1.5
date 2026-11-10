@@ -2,6 +2,48 @@
 
 **Updated 2026-11-08 after direct firmware source inspection.** Completed checks below are evidenced in [SOURCE-AUDIT-029Y4A.md](SOURCE-AUDIT-029Y4A.md).
 
+## TunerStudio offline GUI smoke test — 2026-11-09
+
+- [x] Owner loaded the custom INI in **TunerStudio MS Lite 3.3.01** and opened the **MegaSquirt MS1.5** project; dashboard displayed **Not Connected** and custom JS0/JS1/JS2/JS3 labels.
+- [x] **MS1.5 Stepper IAC** and **MS1.5 Fan Relay (JS2 / PTA3)** dialogs opened and rendered their intended sections/controls.
+- [x] **Offline calibration display restored:** after loading a test tune adapted from the original 029y4a `default-degF.msq`, the owner reported IAC **4 ms / 360 closing / 320 max opening** and fan **194°F ON / 145°F OFF**. All five match the expected offline test values. The initially absurd values occurred in a project with no tune loaded; this supports (but does not prove) missing calibration data as the cause.
+- [x] The owner closed/reopened TunerStudio and reported the same settings remained visible. The owner also confirmed a separate **Save Tune As → Open Tune (`.msq`)** round-trip succeeded with those settings intact. This was reported by the owner, not independently inspected from the saved file.
+- [ ] **Two AFR-unit mismatch warnings** appeared when importing the offline test tune: `afrBins1` and `afrBins2` expected **Volts** in the active narrowband-project configuration but contained **AFR** units in the MSQ. No unit conversion occurred. Select and verify appropriate wideband configuration and preserve tables safely before engine use.
+- [ ] Test other TunerStudio settings, protocol/ECU serial read-back and writing on a safe bench; offline GUI success alone does not validate firmware operation.
+- [ ] Remove obsolete UI/status remnants (e.g., Launch On, NOS/Tables On, spark gauge) as a separate noncritical cleanup.
+- [ ] No serial communication/read/write, physical ECU connection, burn, or on-engine test has been verified; **do not flash current test image**.
+
+See [observations and limits](TUNERSTUDIO-OFFLINE-UI-2026-11-09.md).
+
+## TunerStudio tuning-integrated test assembly — 2026-11-09
+
+- [x] CASM08Z assembled matching new MS1.5 firmware without errors; calibration defaults at `E871–E875` and unique signature verified in S19.
+- [x] Verified previous original source baseline byte-for-byte; protected pages and bootloader unchanged, vector relocation valid, main code ends `DBEF`.
+- [x] Initial TunerStudio **project and two-dialog rendering** smoke test passed offline; see [UI observations](TUNERSTUDIO-OFFLINE-UI-2026-11-09.md).
+- [x] **Selected offline calibration values and separate MSQ save/reopen round-trip** confirmed by owner report: 4, 360, 320, 194°F, 145°F.
+- [ ] **Remaining dialogs, AFR unit handling and actual ECU serial read/write** still require validation; don't confuse offline GUI results with ECU compatibility.
+- [ ] Bench RPM/injector timing and motor/relay electrical protection; **do not flash or use current test image on vehicle**.
+
+## Historical tuning source draft — 2026-11-09
+
+- [x] Custom 32-character firmware/INI matching signature and future test-version string drafted. **Requires a NEW build**; previously passing S19 has old signature.
+- [x] Draft new page-9 IAC motor parameters: low interval, startup homing count and maximum step travel; source/INI offsets 113..117 verified free.
+- [x] Preserve idle algorithm tuning, redefine old PWM `idlefreq` byte as current source's demand cap, and relabel position/idle-control fields. Separate fan JS2 dialog and hide conflicting old output menus.
+- [x] CRLF INI/source addendum patch dry-run checks completed against original 029y4a; static offset checks passed.
+- [x] INI loaded and the IAC and fan dialogs rendered in TunerStudio MS Lite; see [offline GUI observations](TUNERSTUDIO-OFFLINE-UI-2026-11-09.md).
+- [x] Loading the adapted offline 029y4a test tune resolved the reported nonsense values for the five checked settings; separate tune file save/load also succeeded per owner.
+- [ ] Resolve the two AFR unit-mismatch warnings; test other existing-tune migration and hidden legacy feature bits.
+- [x] Owner separately authorized **the tuned test build**, which passed using CASM08Z (signature, CAL page and flash checks). **Runtime timing remains untested.** See [tuning build report](TEST-BUILD-TUNING-2026-11-09.md).
+
+See [the source-only tuning record](TUNERSTUDIO-WIP-2026-11-09.md).
+
+## Windows test build completed — 2026-11-09
+
+- [x] **Original 029y4a baseline and MS1.5 source both assembled with CASM08Z v3.14, no errors.** See [test report](TEST-BUILD-2026-11-09.md).
+- [x] Verify byte-for-byte baseline with shipped S19 and unchanged bootloader/calibration pages; 17 relocated interrupt vectors valid, net code growth **47 bytes**, **1,098** remaining address slots before DFFF.
+- [ ] Actual bench injector/timer jitter and stack high-water validation; verify fan coil and IAC electrical safety, travel and fault recovery.
+- [ ] Update the TunerStudio INI, firmware signature and idle-position tuning semantics before flashing to hardware.
+
 ## Latest source work — 2026-11-08
 
 - [x] Write original, **unbuilt** MS1.5 stepper assembly routine, direct-page variable aliases and 029y4a integration patch; [source work record](FIRMWARE-WIP-2026-11-08.md).
@@ -83,4 +125,4 @@ The older discussion below includes superseded pin-allocation proposals; the [cu
 
 ## Immediate next engineering task
 
-**The actual unbuilt WIP assembly is now in GitHub** for JS0 STEP, JS1 DIR, JS2 fan and JS3 spare. The most important next tasks are a **source/INI compatibility and safety review**, valve-driver electrical calibration and, only after an explicit new **build authorization**, assembly/map inspection and oscilloscope testing. See [current source record](FIRMWARE-WIP-2026-11-08.md).
+**Current:** MS1.5 signature and TunerStudio tuning source draft is committed, but has **not** been reassembled, connected to TunerStudio, or bench-tested. Next review a representative tune, verify physical IAC/relay wiring, and request explicit new test-build authorization before compiling the changes. See [tuning draft](TUNERSTUDIO-WIP-2026-11-09.md).

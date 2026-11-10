@@ -2,7 +2,9 @@
 
 Modernizing an existing **MegaSquirt MS1** to run a **GM 4.3L V6 with throttle-body injection (TBI)**, focusing on better idle control, useful wideband O₂ feedback, and a better tuning experience.
 
-**Status (2026-11-08): First MS1.5 firmware source draft now committed**, including original stepper-control assembly include, RAM aliases and an integration patch against uploaded 029y4a; source-only I/O/RAM/patch checks completed. **No firmware compiled, built, flashed or released.** Real IAC motor, driver electrical compatibility, exact assembled ROM size, stack high-water and injector timing are **unverified**. See [source development log](docs/FIRMWARE-WIP-2026-11-08.md).
+**Current checkpoint (2026-11-10):** The supplied screenshot shows TunerStudio online with the signature-corrected firmware and live gauges; the owner’s loader output reports 12.12 V. During subsequent closed-loop-only Stim testing, the owner reported JS0 pulsing continuously for approximately five minutes without seeing JS1 change. Source inspection found the ADC-history indexed store overwriting five stepper-state bytes. The integration patch now removes that obsolete copy while retaining ADC smoothing. Source checks pass and reject deliberate reintroductions of the conflicting write. **This RAM correction has not been assembled, flashed, or bench-tested; build authorization is still required.** The already-flashed image still contains the conflict. See [RAM ownership correction and next bench check](docs/IAC-RAM-OWNERSHIP-2026-11-10.md) and [signature correction and bench evidence](docs/SIGNATURE-COMPATIBILITY-2026-11-09.md).
+
+**Existing test build:** The [tuning-integrated assembly report](docs/TEST-BUILD-TUNING-2026-11-09.md) records passing assembly/static checks for the custom 029y4a-based MS1.5 image. The [offline UI record](docs/TUNERSTUDIO-OFFLINE-UI-2026-11-09.md) records owner-reported custom-field and tune-file round-trip success. These do not establish live MS1.5 read/write/burn or safe runtime behavior. Resolution of the previously recorded AFR unit warnings was not recovered. **TEST ONLY — NOT ENGINE-READY.** Older “not authorized to flash” status notes predate the owner's later bench-flash go-ahead; engineering validation remains outstanding.
 
 ## Confirmed project requirements
 
@@ -28,7 +30,7 @@ These items come directly from the project owner's discussion on November 8, 202
 5. Preserve one cooling-fan control output and the injection functions.
 6. Retain reliable fuel-control timing as the highest priority.
 
-**Source-audit update (2026-11-08):** MS1/Extra 029y4a **already implements** fan control with separate on/off coolant thresholds, two 8×8 AFR-target tables with EGO fuel correction, and PWM closed-loop idle targeting with warm-up, dashpot and recovery. The missing major feature is **stepper-actuator output/control**, not the entirety of idle or AFR logic. These findings apply to the uploaded historical firmware, **not yet to the unknown firmware installed in the physical ECU**. Real-time timing, flash/RAM, and board I/O feasibility remain unverified.
+**Source-audit update (2026-11-08):** MS1/Extra 029y4a **already implements** fan control with separate on/off coolant thresholds, two 8×8 AFR-target tables with EGO fuel correction, and PWM closed-loop idle targeting with warm-up, dashpot and recovery. The missing major feature is **stepper-actuator output/control**, not the entirety of idle or AFR logic. These findings apply to the uploaded historical firmware, **not automatically to the owner-reported 029t installed in the physical ECU**. Real-time timing, flash/RAM, and board I/O feasibility remain unverified.
 
 ## Architecture preference
 
@@ -45,13 +47,19 @@ These items come directly from the project owner's discussion on November 8, 202
 
 The diagram is **conceptual**. Output assignments, driver interface, and signal availability are not yet validated.
 
-## Firmware development — source only, no build
+## Firmware development — sources and existing test builds
 
 - [Current WIP assembly stepper state machine](firmware/ms15_iac.inc)
 - [WIP RAM alias map and temporary motor-travel constants](firmware/ms15_defs.inc)
-- [Unbuilt source integration patch for original 029y4a](patches/ms15-on-029y4a-wip.patch)
+- [Source integration patch for original 029y4a](patches/ms15-on-029y4a-wip.patch)
 - [Firmware implementation record, source-only checks and blockers](docs/FIRMWARE-WIP-2026-11-08.md)
+- [Passing Windows CASM08Z test build and remaining bench validation requirements](docs/TEST-BUILD-2026-11-09.md)
 - [Repeatable non-building source checks](tools/check_ms15_source.py)
+- [TunerStudio INI customization patch](patches/ms15-tuning-ini.patch)
+- [Matching firmware signature and page-9 calibration patch](patches/ms15-tuning-firmware-addendum.patch)
+- [Non-building tuning source/INI consistency checker](tools/check_ms15_tuning.py)
+- [Tuning controls, offsets and limitations](docs/TUNERSTUDIO-WIP-2026-11-09.md)
+- [Passing tuning-integrated CASM08Z test assembly, flash mapping, and verification](docs/TEST-BUILD-TUNING-2026-11-09.md)
 
 ## Project documents
 
