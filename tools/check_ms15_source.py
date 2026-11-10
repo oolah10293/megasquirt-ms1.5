@@ -36,6 +36,25 @@ assert ram == 0x112, f"RAM layout moved: {ram:#x}"
 
 aliases = {}
 active = "\n".join(row.split(";", 1)[0] for row in asm.splitlines())
+
+# MS1.5 is a dedicated fuel-only controller. Do not silence the MSnS error
+# while leaving spark schedulers using the nonzero saved flash personality.
+# Verify *both* runtime init and page-0-burn refresh are forced to fuel-only,
+# and both old direct-flash ignition readers now use that RAM byte.
+assert len(re.findall(r"(?mi)^\s*clr\s+personality\s*$", active)) == 2, (
+    "Fuel-only runtime personality not cleared at boot and page-0 burn")
+assert not re.search(r"(?mi)^\s*(?:lda\s+personality_f|sta\s+personality)\s*$", active), (
+    "Saved ignition personality can still enter runtime ignition logic")
+assert re.search(r"(?mi)^spark_lookup:\s*lda\s+personality\b", active), (
+    "Spark lookup bypasses runtime fuel-only mode")
+assert re.search(r"(?mi)^nospkoff:\s*lda\s+personality\b", active), (
+    "Misc spark bypasses runtime fuel-only mode")
+assert re.search(r"(?mi)^check_msns:\s*brclr\s+MSNS,personality,check3\b", active)
+assert re.search(r"(?mis)^check_msns:.*?bset\s+config_error,feature2.*?^check3:", active), (
+    "Original ignition-mode check was removed rather than made inapplicable")
+assert re.search(r"(?mi)^\s*check10:\s*$", active), (
+    "Independent ignition-mode validation missing")
+
 for row in defs.splitlines():
     match = re.match(r"\s*(MS15_(?:STATE|POS_L|POS_H|TARGET_L|TARGET_H|HOME_L|HOME_H|WAIT))\s+equ\s+(\w+)", row, re.I)
     if match:
