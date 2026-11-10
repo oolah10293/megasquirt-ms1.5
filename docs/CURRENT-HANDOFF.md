@@ -4,6 +4,20 @@ Updated: 2026-11-10. This is a **documentation-only checkpoint**. It does not au
 
 **Read this file, the current Git history, and relevant code before proceeding. Do not rely on conversation memory for the project state.**
 
+## ACTIVE SOURCE-ONLY IGNITION-REMOVAL CHECKPOINT (November 10, 2026)
+
+**Read [the new fuel-only removal audit](IGNITION-REMOVAL-2026-11-10.md) before editing.** The project's objective is now explicitly to **remove ignition-exclusive firmware**, not to force a zero runtime ignition-personality setting. This supersedes the earlier narrow workaround design below.
+
+The active development branch is `ms15-ignition-removal`, created from `main` at exact baseline `067987733b96a52ba918f285a7bb0a9904acc9b8`. Preserve `ms15-fuel-only-config` at `703c8090f926f0836fd1f48873daa5b7f0007a01` as historical evidence, **do not build on its personality-override approach**, and do not touch `ms15-test-build` because that branch has a push-triggered assembly workflow.
+
+The newly uploaded 029y4a repack contains byte-for-byte matches of all four original source/S19 files recorded in the audit. The supplied November 10 S19/INI matches hashes of the *previously* built RAM-correction artifacts. The original assembler is now available for source inspection, but **no new build has been authorized**.
+
+**New source-only commits:** `24f24bd14c95699ed305a9d1693d07f9cd689aa6` adds a guarded stage-one transformation physically deleting the original spark-table lookup and ignition-output configuration-check block, redirecting three previously fuel-to-spark transitions to `CheckSoftLimit`, and keeping nonignition conflict errors 5/6. Commits `fd562742330f59a9a42d5a15ab11f44cfa17f435` and `1d2feea520ed04551b5d194a444f6442de5a8437` add/tighten source-only tests. Five local tests on original 029y4a source passed. **No full patched-source integration, assembly, firmware image, flash, or new hardware verification exists for stage one.** The spark ISR, output writes, spark-specific portions of the shared IRQ path, configuration strings and TunerStudio menus remain. This is *incomplete firmware*, not engine-safe.
+
+The latest source-only audit documents essential shared paths: TIM2 channel 1 has multiple spark producers; preserve TIM2 channel 0, main tach IRQ, RPM tracking, fuel injection, IAC and fan. Preserve flash calibration offsets/signature until a conscious tune compatibility migration.
+
+**Next source task:** trace and physically remove remaining spark output scheduling/ISR and dwell paths without breaking IRQ fuel injection timing or RPM data. Then remove obsolete tuning UI and prove all remaining symbol references/port writers are intentional. Do not claim ROM/RAM savings from a source-text line count. **Never build, package, release or flash without separate explicit owner authorization.**
+
 ## Confirmed requirements
 
 - GM 4.3L TBI, using existing MegaSquirt MS1 (MC68HC908GP32); MegaSquirt controls **fuel only**, not spark.
