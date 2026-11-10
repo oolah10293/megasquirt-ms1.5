@@ -1,5 +1,7 @@
 # MegaSquirt MS1.5
 
+> **NEWER fuel-only build checkpoint (2026-11-10):** The owner authorized building the dedicated **029y4a-based fuel-only** test firmware, preserving the original **12x12 VE, AFR targets and closed-loop fuel/idle**, and our STEP/DIR IAC and single fan. GitHub [CASM08Z run 42921957431](https://github.com/oolah10293/megasquirt-ms1.5/actions/runs/42921957431) passed on commit `3e8e80e2`. Spark/dwell logic and ignition-configuration error path were removed, and paired S19/INI artifacts were produced for **bench investigation only**. **NOT FLASHED / NOT STIM-VALIDATED / NOT ENGINE-READY.** Read [the full build audit](docs/FUEL-ONLY-BUILD-2026-11-10.md). Older status paragraphs below describe earlier snapshots.
+
 > **Active fuel-only source cleanup (2026-11-10, development branch):** The current goal is to **physically remove ignition-exclusive firmware**, not override `personality` at runtime. See [the source-verified ignition-removal audit](docs/IGNITION-REMOVAL-2026-11-10.md) and [current handoff](docs/CURRENT-HANDOFF.md). Stage one has a committed source transformation and original-source regression tests; it deletes the spark lookup and ignition-mode validation but **does not yet remove ignition ISR/output code**. This work is **unbuilt and not flashable**. The previous RAM-fix S19/INI are unmodified, verified existing artifacts. No new build/flash authorization exists.
 
 
