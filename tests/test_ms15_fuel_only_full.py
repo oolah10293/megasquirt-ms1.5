@@ -51,6 +51,11 @@ class FuelOnlyFirmwareSource(unittest.TestCase):
         # T2CurrX is in extended RAM, so direct INC cannot reach it.
         self.assertNotRegex(self.result, r'(?im)^\s*inc\s+T2CurrX\b')
         self.assertRegex(self.result, r'(?im)^\s*lda\s+T2CurrX\s+add\s+#1\s+sta\s+T2CurrX\b')
+        # Extended RAM idle and staged-fuel counters cannot use direct INC/DEC.
+        self.assertNotRegex(self.result, r'(?im)^\s*dec\s+idleDelayClock\b')
+        self.assertNotRegex(self.result, r'(?im)^\s*inc\s+stgTransitionCnt\b')
+        self.assertRegex(self.result, r'(?im)^\s*deca\s+sta\s+idleDelayClock\b')
+        self.assertRegex(self.result, r'(?im)^\s*lda\s+stgTransitionCnt\s+inca\s+sta\s+stgTransitionCnt\b')
         for suffix in 'XHL':
             self.assertNotRegex(self.result, rf'(?im)^\s*mov\s+T2Curr{suffix},')
             self.assertRegex(self.result, rf'(?im)^\s*lda\s+T2Curr{suffix}\s+sta\s+T2Last{suffix}\b')
