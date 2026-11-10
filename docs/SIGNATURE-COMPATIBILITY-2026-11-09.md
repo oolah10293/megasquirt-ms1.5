@@ -34,3 +34,15 @@ Only the signature and related INI comment/checks changed. The source checker no
 - Next: explicitly authorize a test build, verify image changes and paired INI, then bench-test the new identity. TunerStudio acceptance and all live read/write/burn behavior remain unverified.
 
 This record supersedes the earlier handoff's statement that no flash outcome had been recovered. Historical build hashes remain attached to the original, rejected-signature image.
+
+## Authorized build completed; artifact verification November 10
+
+The owner subsequently explicitly authorized building the matching S19 and INI for bench testing. [Run 42747085015](https://github.com/oolah10293/megasquirt-ms1.5/actions/runs/42747085015) passed on build-branch commit d2bb67b01a54b30accb78b9f4bf809343ceb8c4e.
+
+- Original CASM08Z assembled the stock baseline and modified firmware without errors; baseline matches shipped 029y4a.
+- Compared parsed S19 memory maps against the previously flashed custom image (SHA-256 97bb79390aad12bf60c69f2a9267b2d48983850207053d4b6daed3c85820f8d5).
+- Exactly 22 address bytes differ, all within the 32-byte signature starting at 0xDADB. All other addresses and bytes are identical.
+- S19 checksums pass. New firmware and INI signatures match.
+- MS15_SIGNATURE_FIX_BENCH.s19 SHA-256: 6e300637bfc822b258f5b163c0e6ba208f821fee1fb5bbf2319b49cc3659a6ec
+- MS15_SIGNATURE_FIX_BENCH.ini SHA-256: fea3b5d8f114658cff589652a80f826bb1ab4d2521f26120c0afab3cb2c59e44
+- Hardware flashing of this correction, TunerStudio acceptance, and live tuning remain unverified. Earlier source-only status above is historical.
