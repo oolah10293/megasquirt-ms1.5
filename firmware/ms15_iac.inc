@@ -1,3 +1,8 @@
+; AI/AGENT HANDOFF: Before editing or interpreting this firmware, read
+; docs/CURRENT-HANDOFF.md and AGENTS.md and inspect latest Git commits.
+; Commit source-only progress frequently; NEVER build/flash without explicit
+; owner authorization. Older comments below may describe prior checkpoints.
+;
 ; --------------------------------------------------------------------------
 ; MS1.5 (WIP, UNBUILT) - stepper service, main-loop tail-jump entry.
 ; Copyright 2026 original MS1.5 implementation. NOT road/engine validated.
