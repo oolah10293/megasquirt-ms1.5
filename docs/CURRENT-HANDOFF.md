@@ -4,6 +4,34 @@ Updated: 2026-11-10. This is a **documentation-only checkpoint**. It does not au
 
 **Read this file, the current Git history, and relevant code before proceeding. Do not rely on conversation memory for the project state.**
 
+## New source-only development checkpoint (2026-11-10, later than the historical handoff)
+
+**Active development branch:** ms15-fuel-only-config, based on main SHA
+067987733b96a52ba918f285a7bb0a9904acc9b8.
+**Checkpoint commits:** 9806b67845502f510bbeecdc460e35ad570a66f3
+(source transformation), ef9046545aacce573033893de2d1d90289ac79fb
+(fixture tests), b8a892d2bbddb1074c117ae873162c5039cf6bd0
+(analysis and limits).
+
+See docs/FUEL-ONLY-CONFIG-2026-11-10.md before continuing. Inspection
+of the historical assembler listing establishes that the existing zero
+runtime personality is already the explicit fuel-only mode, while
+check_msns error #3 is conditional on selecting MSNS ignition with neither
+FIDLE nor LED17 spark output. Two additional spark paths read personality_f
+directly, and personality is reloaded from flash after page-0 burns.
+Therefore deleting the check alone would be insufficient.
+
+The proposed source-only transformer overrides the runtime personality to
+zero at both load sites and makes both direct spark readers use runtime
+personality, retaining check_msns and subsequent conflict checks. Four
+synthetic/listing-derived Python fixture tests passed locally. **No complete
+029y4a source-tree integration, assembler run, firmware build, package,
+release, flash, or new Stim test was performed**. Source applicability,
+remaining ignition/output paths, and connection recovery still require
+verification. The ms15-test-build branch and its automatic workflow were
+not changed or triggered. Do not assume this change is present in any
+existing S19/INI or that the original code is safe for engine use.
+
 ## Confirmed requirements
 
 - GM 4.3L TBI, using existing MegaSquirt MS1 (MC68HC908GP32); MegaSquirt controls **fuel only**, not spark.
