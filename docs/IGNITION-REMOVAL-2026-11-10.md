@@ -30,3 +30,34 @@ The original code also has spark paths outside the first removal boundary, inclu
 TunerStudio spark dialogs, flash-calibration-page layout and obsolete error-string pointer tables require a separate compatibility-aware pass; do not compress or move existing page offsets casually. Existing stepper code, fan control, signature and ADC-history RAM correction must remain intact. The stored flash `personality_f` value is not the chosen mechanism for disabling ignition.
 
 **Absolutely no new build, package, release, or flash has been authorized.** The `ms15-test-build` branch's auto-build workflow must not be triggered.
+
+## Source-only Stage 1 checkpoint
+
+- `24f24bd14c95699ed305a9d1693d07f9cd689aa6`: commit the fail-closed `tools/remove_ms15_ignition_stage1.py` transformation (unbuilt).
+- `fd562742330f59a9a42d5a15ab11f44cfa17f435`: add exact-upstream-source regression tests.
+- `1d2feea520ed04551b5d194a444f6442de5a8437`: make the deleted-character-count check independent of comment spelling.
+- Five local `unittest` checks on the verified original assembly passed: physical removal, preservation of key fuel/RPM labels, refusal of new external consumers, refusal of a changed fuel handoff, and refusal of double application. The local preliminary transformer and committed script have the same removal boundaries and call redirection; their comment text is not byte-identical. **The committed script has not yet been rerun on the fully integrated MS1.5 source tree.**
+
+Command for future source-only regression against the original ZIP:
+
+```sh
+MS15_ORIGINAL_ZIP=/path/to/029y4a.zip python -m unittest discover -s tests -p 'test_ms15_ignition_stage1.py'
+```
+
+Apply the existing MS1.5 integration and tuning patches first to an **extracted working copy** (do not modify the supplied archive or old S19), then run:
+
+```sh
+python tools/remove_ms15_ignition_stage1.py /path/to/029y4a/src/msns-extra.asm
+```
+
+The script **does not** assemble or install anything; it edits one working source file only. It is intentionally not inserted into the `ms15-test-build` build workflow without separate authorization. No new generated S19 or changed INI exists.
+
+### Critical later-stage dependencies discovered
+
+- TIM2 channel 1 is the spark interrupt: `SPARKTIME` at original line 9863 and its vector at 13787. It is initialized disabled at 930–939, but re-enabled for EDIS2 SAW at 8799–8800 and ignition delay at 11822–11823. **Do not redirect its vector until both producers and all other interrupt dependencies are removed.**
+- The IRQ handler `DOSQUIRT` begins at original line 10133. Its `CYCLE_CALC` branch (11163–11880) contains extensive spark scheduling, **but the handler also supplies fuel injection and RPM/trigger timing**. The injection continuation begins at `SKIP_CYCLE_CALC` (11881), followed by `squirtCheck1` (11956); this shared path must survive.
+- `SKIP_CYCLE_CALC` also contains trigger logging and prior-period state used by fuel/RPM logic. A source-only string deletion alone is insufficient proof of correct fuel behavior.
+- `turnallsparkoff` and `misc_spark` still run, and the original spark output and dwell macros still exist. Stage 1 **does not** prevent these residual ignition activities and is **NOT a deployable fuel-only firmware**.
+- The uploaded current INI still exposes Spark Settings, advance tables, dwell and rotary options and contains the original calibration offsets. Remove those UI features separately without arbitrarily shifting flash addresses, menus needed for fuel or tuning signatures.
+
+No actual ROM/RAM savings can be claimed until a separately authorized assembly/map check. The only verified stage-1 size numbers are source-text deletions, **not machine code reduction**.
