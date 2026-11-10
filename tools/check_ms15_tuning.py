@@ -16,8 +16,10 @@ asm = (root / "src" / "msns-extra.asm").read_text(errors="replace")
 iac = (root / "src" / "ms15_iac.inc").read_text(errors="replace")
 defs = (root / "src" / "ms15_defs.inc").read_text(errors="replace")
 
-signature = "MS1.5 format 001 ***************"
-assert len(signature) == 32
+signature = "MS1/Extra format MS15_001 ******"
+assert len(signature.encode('ascii')) == 32
+assert signature.startswith('MS1/Extra format ')
+assert signature != 'MS1/Extra format 029y3 *********'
 assert f'signature    = "{signature}"' in ini
 assert f"db   '{signature}'" in asm
 assert "MS1.5 TEST rev 0.1 *************" in asm

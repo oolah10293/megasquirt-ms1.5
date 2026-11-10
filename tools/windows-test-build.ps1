@@ -166,7 +166,7 @@ assert 0xFACA + 18*3 == 0xFB00
 high_changes = [k for k in before.keys()|after.keys() if k>=0xE000 and before.get(k)!=after.get(k)]
 assert set(high_changes).issubset(allowed|new_cal), f"Unexpected high-memory differences: {high_changes}"
 assert set(high_changes)&new_cal == new_cal, "Not all five calibration bytes were added"
-signature = b"MS1.5 format 001 ***************"
+signature = b"MS1/Extra format MS15_001 ******"
 version = b"MS1.5 TEST rev 0.1 *************"
 assert len(signature)==32 and len(version)==32
 main_blob = bytes(after.get(k,0) for k in range(0x8128, 0xE000))
