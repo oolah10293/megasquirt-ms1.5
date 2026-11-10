@@ -41,3 +41,32 @@ After applying the three existing patches to the original extracted tree, a futu
 Open concerns: inspect all other potential ignition output/interrupt writers before claiming fuel-only hardware safety. Stored flash and TunerStudio can still show an ignition mode selected while the dedicated MS1.5 runtime ignores it; that discrepancy should be resolved separately without risking tuning compatibility. The connection refusal after the error is not proven to be caused by the error check itself.
 
 The existing ms15-test-build workflow has NOT been updated or triggered. A future authorized assembly must integrate this source transformation into the test build script after the existing patches and before checking/assembling. No build, package, release, or flash is authorized here. Keep the main branch and automatic-build branch untouched until the new source has been fully reviewed.
+
+
+## Additional source-only audit checkpoint (no firmware build)
+
+The November 9 CASMW listing was stripped of assembler address columns
+to reconstruct 22,056 original/expanded source listing lines in memory.
+On that reconstructed text, the transformation completed without
+assertion failures, identifying the two flash-to-RAM personality copies and
+the two direct flash spark readers. This is stronger evidence than a
+small synthetic fixture, but is still NOT equivalent to applying the
+transformation to the complete original ZIP source files.
+
+Updated tools/check_ms15_source.py (commit
+0c3834405a0f36bac3d2fc5aa1307941db050690) now rejects a patched
+source tree unless it contains both runtime clears, has no old direct
+flash-personality loads or RAM reloading stores, routes the two spark
+reader sites through runtime personality, and preserves check_msns and
+the later check10 validation. All seven added regex invariants passed
+in a separate local source-only screen of the reconstructed listing.
+The original RAM and pin ownership checks were NOT rerun on an actual
+029y4a source tree during this continuation, since that full source
+archive was not available locally.
+
+Current state: source transformation code committed; source checker
+tightened; four fixture tests passed; reconstructed-listing source check
+passed; no firmware assembly or hardware test, no build automation
+triggered, and no S19/INI alteration. Next meaningful step is a
+verified full 029y4a source-tree application and static checks, while
+still withholding assembly/flash until the owner's explicit go-ahead.
