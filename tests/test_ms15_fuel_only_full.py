@@ -51,6 +51,9 @@ class FuelOnlyFirmwareSource(unittest.TestCase):
         # T2CurrX is in extended RAM, so direct INC cannot reach it.
         self.assertNotRegex(self.result, r'(?im)^\s*inc\s+T2CurrX\b')
         self.assertRegex(self.result, r'(?im)^\s*lda\s+T2CurrX\s+add\s+#1\s+sta\s+T2CurrX\b')
+        for suffix in 'XHL':
+            self.assertNotRegex(self.result, rf'(?im)^\s*mov\s+T2Curr{suffix},')
+            self.assertRegex(self.result, rf'(?im)^\s*lda\s+T2Curr{suffix}\s+sta\s+T2Last{suffix}\b')
         self.assertIn('bclr    config_error,feature2',self.result)
 
     def test_deleted_asm_symbols_are_not_referenced(self):
