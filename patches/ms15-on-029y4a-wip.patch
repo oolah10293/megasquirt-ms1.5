@@ -171,6 +171,11 @@
 @@ -10997 +10931 @@
 -        bset     output1,porta
 +        ; MS15 reserved I/O: removed bset output1,porta
+@@ -12118,2 +12118,2 @@
+-        lda     map,x
+-        sta     lmap,x			; Store the old value
++        ; MS1.5 owns lmat..lego: do not copy ADC history into this RAM.
++        ; ADC smoothing below still uses the previous live map,x reading.
 @@ -13276 +13210 @@
 -         bset   water2,porta		; Turn Nos output on
 +         ; MS15 reserved I/O: removed bset water2,porta		; Turn Nos output on

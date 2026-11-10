@@ -41,6 +41,42 @@ for row in defs.splitlines():
         aliases[symbol] = old
 assert len(aliases) == 8 and len(set(aliases.values())) == 8
 
+# ADC history is an indexed array: sta lmap,x writes lmat..lego without
+# naming those symbols. These five bytes belong to MS1.5 only after that
+# obsolete copy is removed. A direct lmap store (offset zero) is retained.
+history = range(addresses['lmap'], addresses['lego'] + 1)
+assert list(history) == list(range(0x77, 0x7D))
+history_refs = [line.strip().lower() for line in active.splitlines()
+                if re.search(r'\blmap\b', line, re.I)]
+assert len(history_refs) == 1 and re.fullmatch(r'sta\s+lmap', history_refs[0]), (
+    'ADC history access conflicts with stepper RAM', history_refs)
+
+# Audit application indexed writers as well as direct aliases. This is a
+# deliberately narrow source guard, not a general assembly dataflow proof.
+# Reject a new writer until its destination range has been reviewed.
+indexed = []
+for line in active.splitlines():
+    match = re.match(r'\s*(sta|stx|sthx|clr|inc|dec|com|neg|asl|lsl|lsr|rol|ror)\s+(.*?,\s*x\+?)\s*$', line, re.I)
+    if match:
+        op, operand = match.group(1).lower(), re.sub(r'\s+', '', match.group(2).lower())
+        assert op == 'sta' and operand in {',x', 'map,x', 've_r,x'}, (
+            'Unaudited indexed RAM writer', line)
+        indexed.append(operand)
+assert indexed.count(',x') == 1
+assert re.search(r'ClearRAM:\s*lda\s+#\$32\s*sta\s*,x\s*aix\s+#1\s*cphx\s+#ram_last\+1\s*bne\s+ClearRAM', active, re.I)
+assert active.index('ClearRAM:') < active.index('mov     #$01,MS15_STATE')
+assert indexed.count('map,x') == 1
+# Runtime ADC input array (offsets 0..5) and calibration page buffer must
+# remain disjoint from every stepper byte. The original header's page
+# buffer begins immediately after ms_ram_end (0x112).
+stepper = {addresses[old] for old in aliases.values()}
+assert not stepper.intersection(range(addresses['map'], addresses['map'] + 6))
+assert all(a < ram for a in stepper)
+assert re.search(r'ms_ram_end:\s*ms_rf_start:\s*VE_r\s+rmb\s+\$90',
+                 '\n'.join(x.split(';', 1)[0] for x in header.splitlines()), re.I)
+# Preserve the live ADC smoothing path; only the unused history copy goes.
+assert re.search(r'Normal_ADSEL:\s*tax\s*lda\s+adr\s*add\s+map,x\s*rora\s*sta\s+map,x', active, re.I)
+
 writers = re.findall(r"^\s*(bset|bclr)\s+(water2|water|output1)\s*,\s*porta\b", active, re.I | re.M)
 assert len(writers) == 2 and {(x.lower(), y.lower()) for x,y in writers} == {
     ("bset", "output1"), ("bclr", "output1")}, writers

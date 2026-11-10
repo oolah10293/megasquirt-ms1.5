@@ -3,10 +3,14 @@
 ; Target: original MS1 HC908GP32, 029y4a, V3.0 mainboard.
 ; STEP=JS0/PTA5, DIR=JS1/PTA4, fan=JS2/PTA3, JS3/PTA2 unused.
 ;
-; All mapped RAM addresses are from 029y4a DS declarations shown to have
-; NO active references in the source set. idleActClock is reclaimed ONLY
-; after the original FIDLE PWM actuator is disconnected in the patch.
-; Realtime/protocol/stack impact still requires separate testing.
+; Ownership is enforced by the integration patch and source checker.
+; idleph/idlepl have no legacy references. lmat..lego are reclaimed from
+; the obsolete ADC-history copy: remove BOTH lda map,x / sta lmap,x at
+; Normal_ADSEL before using these aliases. Absence of named references
+; alone is NOT evidence that a RAM byte is unused.
+; idleActClock is reclaimed after removing the original FIDLE PWM writer.
+; No new RAM is allocated; the existing page buffer and stack stay in place.
+; Real-time/protocol/stack impact still requires separate testing.
 ; --------------------------------------------------------------------------
 ; All below are in 0x00..0xFF. The tempting n2ohold address is
 ; 0x010C, which is NOT addressable by direct bit instructions.
