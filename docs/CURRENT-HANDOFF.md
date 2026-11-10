@@ -4,6 +4,12 @@ Updated: 2026-11-10. This is a **documentation-only checkpoint**. It does not au
 
 **Read this file, the current Git history, and relevant code before proceeding. Do not rely on conversation memory for the project state.**
 
+## LATEST INDEPENDENT ARTIFACT AUDIT (2026-11-10)
+
+The exact CASM08Z success and bench-only artifact from Actions run `42921957431` were independently verified by downloading and decoding the original CI ZIP. See [independent S19/vector/fuel/INI audit](FUEL-ONLY-INDEPENDENT-ARTIFACT-AUDIT-2026-11-10.md), commit `3f44596e0b81db4d2386c082ce48bd95b3e38b36`. All S19 checksums and 18 vector targets were checked; TIM2 Ch1 points to `Dummy`, while IRQ and TIM2 Ch0 remain active. The compiled fuel/AFR, fan, and IAC code sites and matching INI were checked; net code memory saving is 11,825 occupied bytes relative to the previous custom MS1.5 image.
+
+**Outstanding source issue:** the full cleanup removes unrelated configuration-error setters along with ignition-only checks; several spark-named rev-limit/knock/LED paths still exist. Do not describe the firmware as fully cleaned up, bench validated or engine safe. The user authorized assembly and analysis but **not flashing, packaging a release, or deployment**. The build and dev branches remain separate; assembled source scripts are identical to dev, while the IAC include differs only by documentation comments.
+
 ## NEWER: AUTHORIZED FUEL-ONLY TEST ASSEMBLY SUCCEEDED (2026-11-10)
 
 The user **explicitly authorized building** the 029y4a-based dedicated fuel-only firmware while preserving the original 12x12 fuel/AFR features; this overrides older statements below that no build was authorized. It does **not** authorize flashing, packaging a release, or vehicle use.
