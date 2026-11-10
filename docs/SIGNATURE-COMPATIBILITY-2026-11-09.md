@@ -46,3 +46,11 @@ The owner subsequently explicitly authorized building the matching S19 and INI f
 - MS15_SIGNATURE_FIX_BENCH.s19 SHA-256: 6e300637bfc822b258f5b163c0e6ba208f821fee1fb5bbf2319b49cc3659a6ec
 - MS15_SIGNATURE_FIX_BENCH.ini SHA-256: fea3b5d8f114658cff589652a80f826bb1ab4d2521f26120c0afab3cb2c59e44
 - Hardware flashing of this correction, TunerStudio acceptance, and live tuning remain unverified. Earlier source-only status above is historical.
+
+## Hardware result — November 10, 2026
+
+Owner flashed `MS15_SIGNATURE_FIX_BENCH.s19` using MS Download 1.10 on COM1. Loader output showed complete transfer (1769 lines, 27942 bytes), the new identity in two-line chunks (`MS1/Extra format MS15_001 ******`), and controller battery voltage 12.12 V.
+
+Owner then loaded the matching INI into the existing TunerStudio MS Lite 3.3.01 project after the signature mismatch prompt. Screenshot confirms the project title contains `MS1.5 TEST rev 0.1`, status is **Online: MegaSquirt MS1.5**, and live gauges / port indicators are displaying data (e.g. 942 RPM, 72°F CLT, 95 kPa MAP, 0.45 V O2). This is the first confirmed live serial connection to the modified firmware.
+
+The screenshot also shows `Modified - saving test 2026-11-09_17.23.49.msq`. It does not establish which tune bytes are modified or that any burn occurred. Page read/write/burn, motor timing, electrical output, injector safety, and engine readiness remain unverified. This image remains for Stim bench testing only.
