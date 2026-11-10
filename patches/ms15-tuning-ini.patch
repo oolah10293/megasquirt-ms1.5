@@ -2,7 +2,7 @@
 +++ b/msns-extra.ini
 @@ -6 +6,2 @@
 -   signature    = "MS1/Extra format 029y3 *********" ; gets changed when data format/this file changes
-+   signature    = "MS1.5 format 001 ***************" ; must match the NEW, not-yet-built firmware signature
++   signature    = "MS1/Extra format MS15_001 ******" ; must match the MS1/Extra-family MS1.5 firmware signature
 +   iniVersion   = 3.0 ; custom MS1.5 definition; do not substitute old 029y3 INI
 @@ -950 +951 @@
 -       idle_dc_lo  = scalar,  U08, 000, "dc", 1, 0, 0, 255, 0

@@ -1,0 +1,36 @@
+# MS1.5 signature compatibility correction — November 9, 2026
+
+## Observed bench results
+
+The owner supplied MS Download 1.10 output reporting 1769 lines / 27942 bytes sent, Complete, and the original custom MS1.5 signature. The owner then reported the ECU running again on the Stim. The loader reported 6.12 V and a low-voltage warning; actual supply voltage has not yet been verified.
+
+The uploaded TunerStudioDebugPackage.zip records TunerStudio MS Lite 3.3.01 communicating on COM1 at 9600 baud. It repeatedly receives all 32 signature bytes for `MS1.5 format 001 ***************`, then logs `Unsupported Controller Firmware`. Protocol initialization also sends F and times out. The active projectCfg/mainController.ini is byte-for-byte identical to the owner's uploaded MS15_TunerStudio.ini. These observations establish readable identity responses, not successful live tuning.
+
+## Evidence and interpretation
+
+TunerStudio developer Phil Tobin states that connection requires a recognized firmware family and that custom identities can use a known beginning:
+https://www.msextra.com/forums/viewtopic.php?p=325694&sid=3c1bfe61251815ff67a81048e8832c3c
+
+The original 029y4a source and INI use `MS1/Extra format 029y3 *********`. The proposed interpretation is that replacing this family beginning with MS1.5 caused the rejection. The exact new candidate below has NOT been tested in TunerStudio.
+
+## Source correction
+
+Firmware integration addendum and INI patch now use the same 32-byte ASCII identity:
+
+`MS1/Extra format MS15_001 ******`
+
+This retains the MS1/Extra family prefix while keeping the modified calibration format distinct from stock 029y3. The human-readable version string remains `MS1.5 TEST rev 0.1 *************`.
+
+Only the signature and related INI comment/checks changed. The source checker now also requires the family prefix, 32 ASCII bytes, and a non-stock identity. No motor logic, timing, page offsets, or calibration values changed.
+
+## Validation and authorization
+
+- Applied the integration, firmware addendum, and INI patches to the owner's original 029y4a ZIP using git apply --unidiff-zero.
+- check_ms15_source.py: PASS.
+- check_ms15_tuning.py: PASS.
+- No assembler invocation, new S19, or hardware flash was performed for this correction.
+- Owner authorized firmware and INI changes. A new build has not been explicitly authorized in this continuation.
+- This source change does not alter the already flashed ECU or previously delivered artifacts. Do not install the changed INI against the old flashed signature and expect a connection.
+- Next: explicitly authorize a test build, verify image changes and paired INI, then bench-test the new identity. TunerStudio acceptance and all live read/write/burn behavior remain unverified.
+
+This record supersedes the earlier handoff's statement that no flash outcome had been recovered. Historical build hashes remain attached to the original, rejected-signature image.
