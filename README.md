@@ -1,5 +1,8 @@
 # MegaSquirt MS1.5
 
+> **LATEST verified final fuel-only build (Nov 10 local / Nov 11 UTC, 2026):** [Windows CASM08Z run 42946540078](https://github.com/oolah10293/megasquirt-ms1.5/actions/runs/42946540078) passed at assembly commit `6c1621e7`, from final source-only dev checkpoint `91c1defd`. Five upstream tests, nine integrated cleanup tests, both source/tuning checkers and CASM08Z original/final assemblies passed. Actual S19 checksum/vector and bootloader comparisons passed; matching final INI verified. See [final build/hashes/checklist](docs/FUEL-ONLY-FINAL-BUILD-2026-11-10.md). **BENCH IMAGE ONLY: NO FLASH, VEHICLE VALIDATION OR RELEASE.** Older S19 images below are superseded.
+
+
 > **FINAL source-only fuel cleanup verification (November 10 local / November 11 UTC, 2026):** [Integrated source-only CI run 42944883755](https://github.com/oolah10293/megasquirt-ms1.5/actions/runs/42944883755) PASS, **9 regression tests**, source/tuning checks, and exact allowance of six harmless historical ignition/racing-named runtime instructions. Additional fixes include clearing a stale VE3 table-selection flag, removing dead dwell aliases, preserving extra cranking fuel under a fuel-specific alias, and retiring incorrect spark/nitrous help. [Current authoritative handoff](docs/CURRENT-HANDOFF.md). **SOURCE ONLY — NO NEW BUILD, NO RELEASE, NO FLASH.** Historical S19 files predate this revision.
 
 
