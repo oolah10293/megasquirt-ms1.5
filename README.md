@@ -1,5 +1,7 @@
 # MegaSquirt MS1.5
 
+> **NEW — SIX PROGRAMMABLE OUTPUTS ASSEMBLED WITH MATCHING TUNERSTUDIO INI (2026-11-11 UTC):** User-authorized [Windows CASM08Z run 42965620172](https://github.com/oolah10293/megasquirt-ms1.5/actions/runs/42965620172) **PASS** (15 source regression tests, schema/static checks, S19 calibration/bootloader/vector audit). Build branch `ms15-test-build` at `eef96cf943dc`, from final source commit `8e396c379b82`; `MS15-PROGRAMMABLE-OUTPUTS-UNVALIDATED.s19` and matching `.ini` share **`MS15_002` signature**. [Assembly report and exact SHA-256 hashes](docs/PROGRAMMABLE-OUTPUTS-ASSEMBLY-2026-11-11.md); [current handoff](docs/CURRENT-HANDOFF.md). **ASSEMBLED AND STATIC-VERIFIED ONLY; NOT FLASHED, TUNERSTUDIO-GUI-VERIFIED, OR STIM/VEHICLE-VERIFIED. NO RELEASE.** The older fuel-only assembled image below is superseded for new builds but remains the previously owner-booted version.
+
 > **LATEST verified final fuel-only build (Nov 10 local / Nov 11 UTC, 2026):** [Windows CASM08Z run 42946540078](https://github.com/oolah10293/megasquirt-ms1.5/actions/runs/42946540078) passed at assembly commit `6c1621e7`, from final source-only dev checkpoint `91c1defd`. Five upstream tests, nine integrated cleanup tests, both source/tuning checkers and CASM08Z original/final assemblies passed. Actual S19 checksum/vector and bootloader comparisons passed; matching final INI verified. See [final build/hashes/checklist](docs/FUEL-ONLY-FINAL-BUILD-2026-11-10.md). **BENCH IMAGE ONLY: NO FLASH, VEHICLE VALIDATION OR RELEASE.** Older S19 images below are superseded.
 
 
