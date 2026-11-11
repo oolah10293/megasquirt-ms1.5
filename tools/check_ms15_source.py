@@ -144,7 +144,7 @@ out_ops=dict.fromkeys(('lda','ldx','sta','cmp','bit','and','ora','add','clr','in
 out_ops.update(dict.fromkeys(('bset','bclr'),2))
 out_ops.update(dict.fromkeys(('brset','brclr','jmp'),3))
 out_ops.update(dict.fromkeys(('beq','bne','bhs','blo','bls','bhi','bra'),2))
-out_ops.update(dict.fromkeys(('clrh','coma','lsla'),1))
+out_ops.update(dict.fromkeys(('clrh','coma','lsla','psha','pula','tpa','tap'),1))
 out_labels={}
 out_instructions=[]
 offset=0
@@ -171,32 +171,40 @@ for at,op,args in out_instructions:
 assert 'ms15_out_next' in out_labels and 'ms15_out_eval' in out_labels
 assert 'ms15_out_advance' in out_labels
 assert re.search(r'(?im)^\s*clrh\b',outputs), 'HX must be cleared before ROM indexed lookup'
+normal,sep,handlers=outputs.partition('; Fast native Squirt LED handlers')
+assert sep and all(name+':' in handlers for name in
+                   ('MS15_IL_ON1','MS15_IL_ON2','MS15_IL_OFF'))
 pin_writes=re.findall(
     r'(?im)^\s*(bset|bclr)\s+(sled|wled|aled|output1|output2|iasc),'
-    r'(portc|porta)\b',outputs)
+    r'(portc|porta)\b',normal)
 for bit,port in (('sled','portc'),('wled','portc'),('aled','portc'),
                  ('output1','porta'),('output2','porta'),('iasc','porta')):
     assert sorted(op.lower() for op,b,p in pin_writes
                   if b.lower()==bit and p.lower()==port)==['bclr','bset'],bit
-assert len(pin_writes)==12,('Unexpected extra output writer',pin_writes)
-# Three designated injector ISR edges drive only LEDs selecting native
-# Squirt mode 5. Other original LED writers remain physically removed.
-native_pin_writes=re.findall(
-    r'(?im)^\s*(bset|bclr)\s+(sled|wled|aled|coila|coilb),portc\b',active)
+assert len(pin_writes)==12,('Unexpected primary output writer',pin_writes)
+# The original relative injector IRQ branch spans contain only JMP hooks.
+assert not re.search(r'(?im)^\s*(bset|bclr)\s+(sled|wled|aled|coila|coilb),portc\b',active),(
+    'Original IRQ still has an unguarded LED write')
+native_pin_writes=re.findall(r'(?im)^\s*(bset|bclr)\s+(sled|wled|aled),portc\b',handlers)
 for pin in ('sled','wled','aled'):
     assert sum(1 for op,p in native_pin_writes if p.lower()==pin and op.lower()=='bset')==2,pin
     assert sum(1 for op,p in native_pin_writes if p.lower()==pin and op.lower()=='bclr')==1,pin
-assert len(native_pin_writes)==9,('unexpected LED writer outside injector IRQ',native_pin_writes)
-for label,event,on in (('nsq1','ON1',True),('nsq2','ON2',True),
-                       ('CHK_RE_ENABLE','OFF',False)):
-    assert active.count('ILE_'+event+'_0:')==1
+assert len(native_pin_writes)==9,('Unexpected fast LED writer',native_pin_writes)
+for event,on in (('ON1',True),('ON2',True),('OFF',False)):
+    assert active.count('jmp     MS15_IL_'+event)==1,event
+    assert active.count('ILE_RET_'+event+':')==1,event
+    assert handlers.count('MS15_IL_'+event+':')==1,event
+    assert handlers.count('jmp     ILE_RET_'+event)==1,event
     for idx,pin in enumerate(('sled','wled','aled')):
         stmt='bset' if on else 'bclr'
-        snippet=re.compile(
+        matcher=re.compile(
             r'(?im)^\s*lda\s+ms15_out'+str(idx)+r'_mode_f\s*'
-            r'cmp\s+#5T\s*bne\s+ILE_'+event+'_'+str(idx)+r'\s*'
-            r''+stmt+r'\s+'+pin+r',portc\s*ILE_'+event+'_'+str(idx)+r':')
-        assert snippet.search(active),('injector LED writer has no mode guard',event,pin)
+            r'cmp\s+#5T\s*bne\s+IL_'+event+'_'+str(idx)+r'\s*'
+            +stmt+r'\s+'+pin+r',portc\s*IL_'+event+'_'+str(idx)+r':')
+        assert matcher.search(handlers),('unprotected fast LED handler',event,pin)
+    body=handlers.split('MS15_IL_'+event+':',1)[1].split('jmp     ILE_RET_'+event,1)[0]
+    assert re.search(r'(?im)^\s*psha\s+tpa\s+psha\s+',body)
+    assert re.search(r'(?im)^\s*pula\s+tap\s+pula\s*$',body)
 
 assert not re.search(r'(?im)^\s*bclr\s+iasc,porta\b',active),(
     'Legacy PWM idle FIDLE writer was not removed')

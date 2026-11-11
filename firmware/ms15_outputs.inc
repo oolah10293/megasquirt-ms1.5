@@ -355,3 +355,82 @@ MS15_OUT_EVAL_RETURN:
         jmp     MS15_OUT_AFTER_A
 O15_EVAL_RET_B:
         jmp     MS15_OUT_AFTER_B
+
+; Fast native Squirt LED handlers reached through absolute IRQ JMP hooks.
+; Save A and CCR: original Squirt BSET/BCLR did not modify either. HC08
+; PULA is CCR-neutral. This costs two transient stack bytes per handler,
+; no JSR/RTS return frame, and does not change H/X or injector RAM state.
+; Each JMP returns to a unique original-IRQ continuation label.
+
+MS15_IL_ON1:
+        psha
+        tpa
+        psha
+        lda     ms15_out0_mode_f
+        cmp     #5T
+        bne     IL_ON1_0
+        bset    sled,portc
+IL_ON1_0:
+        lda     ms15_out1_mode_f
+        cmp     #5T
+        bne     IL_ON1_1
+        bset    wled,portc
+IL_ON1_1:
+        lda     ms15_out2_mode_f
+        cmp     #5T
+        bne     IL_ON1_2
+        bset    aled,portc
+IL_ON1_2:
+        pula
+        tap
+        pula
+        jmp     ILE_RET_ON1
+
+MS15_IL_ON2:
+        psha
+        tpa
+        psha
+        lda     ms15_out0_mode_f
+        cmp     #5T
+        bne     IL_ON2_0
+        bset    sled,portc
+IL_ON2_0:
+        lda     ms15_out1_mode_f
+        cmp     #5T
+        bne     IL_ON2_1
+        bset    wled,portc
+IL_ON2_1:
+        lda     ms15_out2_mode_f
+        cmp     #5T
+        bne     IL_ON2_2
+        bset    aled,portc
+IL_ON2_2:
+        pula
+        tap
+        pula
+        jmp     ILE_RET_ON2
+
+MS15_IL_OFF:
+        psha
+        tpa
+        psha
+        lda     ms15_out0_mode_f
+        cmp     #5T
+        bne     IL_OFF_0
+        bclr    sled,portc
+IL_OFF_0:
+        lda     ms15_out1_mode_f
+        cmp     #5T
+        bne     IL_OFF_1
+        bclr    wled,portc
+IL_OFF_1:
+        lda     ms15_out2_mode_f
+        cmp     #5T
+        bne     IL_OFF_2
+        bclr    aled,portc
+IL_OFF_2:
+        pula
+        tap
+        pula
+        jmp     ILE_RET_OFF
+

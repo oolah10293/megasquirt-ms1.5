@@ -378,26 +378,15 @@ MS15_VE3_OFF:
         lambda m:m.group('prefix')+'nop     ; MS1.5 programmable LED owns this pin',result)
     assert nled>=3,('no legacy LED pin writers found',nled)
 
-    # Restore native Squirt LED edges in the real injector IRQ path.
-    # Any LED selecting mode 5 follows both injector start/stop edges.
-    # Inline writes avoid extra ISR stack frames and event sampling latency.
-    def native_injector_edge(activate: bool, event: str) -> str:
-        lines=['        ; MS15 injector-event LED fanout']
-        for idx,pin in enumerate(('sled','wled','aled')):
-            skip=f'ILE_{event}_{idx}'
-            lines.extend((
-                f'        lda     ms15_out{idx}_mode_f',
-                '        cmp     #5T',
-                f'        bne     {skip}',
-                f'        {"bset" if activate else "bclr"}    {pin},portc',
-                skip+':',
-            ))
-        return eol.join(lines)
-
-    for label,event,activate,check in (
-        ('nsq1:','ON1',True,'clr pwrun1'),
-        ('nsq2:','ON2',True,'clr pwrun2'),
-        ('CHK_RE_ENABLE:','OFF',False,'brset firing2,squirt'),
+    # Preserve original injector IRQ branch spans: replace each former
+    # Squirt LED write with an absolute jump to a short out-of-line handler.
+    # Each handler jumps straight back; no JSR, extra stack or RAM required.
+    # Mode 5 still tracks the real injector edges rather than a sampled
+    # 100ms state.
+    for label,event,check in (
+        ('nsq1:','ON1','clr pwrun1'),
+        ('nsq2:','ON2','clr pwrun2'),
+        ('CHK_RE_ENABLE:','OFF','brset firing2,squirt'),
     ):
         assert result.count(eol+label)==1,(label,'injection label missing')
         at=result.index(eol+label)
@@ -406,19 +395,11 @@ MS15_VE3_OFF:
         nop='nop     ; MS1.5 programmable LED owns this pin'
         pos=result.rfind(nop,0,at)
         assert at-200<=pos<at,(label,'injector LED site missing')
-        result=result[:pos]+native_injector_edge(activate,event)+result[pos+len(nop):]
-    assert result.count('MS15 injector-event LED fanout')==3
-
-    # CASM08Z found that the injector LED fanout lengthened the existing
-    # firing2 branch past HC08's signed 8-bit relative range. Keep exactly
-    # the same branch condition but use a short inverse branch + absolute JMP.
-    edge_branch=re.compile(r'(?im)^([ \t]*)brset[ \t]+firing2,squirt,CHK_DONE_2JMP\b')
-    replacement=(
-        '        brclr   firing2,squirt,MS15_I2_SKIP'+eol+
-        '        jmp     CHK_DONE_2JMP'+eol+
-        'MS15_I2_SKIP:')
-    result,njump=edge_branch.subn(replacement,result)
-    assert njump==1,('expected one injector-completion long branch',njump)
+        hook='jmp     MS15_IL_'+event+eol+'ILE_RET_'+event+':'
+        result=result[:pos]+hook+result[pos+len(nop):]
+    for event in ('ON1','ON2','OFF'):
+        assert result.count('ILE_RET_'+event+':')==1
+        assert result.count('jmp     MS15_IL_'+event)==1
 
     # New serial-burnable calibration records follow the five existing IAC
     # bytes in page 9; 6 * 7 = 42 bytes, offsets 118..159 (<189).
