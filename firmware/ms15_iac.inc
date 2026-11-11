@@ -18,6 +18,8 @@
 ; --------------------------------------------------------------------------
 
 MS15_IAC_SERVICE:
+        jmp     MS15_OUTPUT_SERVICE  ; output work at <=10 Hz, no new stack frame
+MS15_IAC_CONTINUE:
 ; Reload startup homing count once at power-on from new page-9 calibration.
 ; Saturate corrupt/oversize values at 510 (actual safe valve count unknown).
         brset   MS15_INIT_DONE,MS15_STATE,MS15_INIT_FINISHED
@@ -169,3 +171,7 @@ MS15_HOME_DEC_LOW:
         bclr    MS15_HOMING,MS15_STATE
 MS15_HOME_NOT_DONE:
         jmp     CalcRunningParameters
+
+; Integrated configurable output service. Each pass returns to
+; MS15_IAC_CONTINUE, preserving the original stepper timing state machine.
+        include "ms15_outputs.inc"

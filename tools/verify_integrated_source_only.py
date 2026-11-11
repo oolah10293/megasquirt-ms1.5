@@ -43,7 +43,7 @@ def main():
     assert source.exists() and ini.exists()
     old_s19=tree/'msns-extra.s19'
     original_image=old_s19.read_bytes()
-    for name in ('ms15_defs.inc','ms15_iac.inc'):
+    for name in ('ms15_defs.inc','ms15_iac.inc','ms15_outputs.inc'):
         buf=(REPO/'firmware'/name).read_text(encoding='utf-8')
         (tree/'src'/name).write_bytes(re.sub(r'\r?\n','\r\n',buf).encode('ascii'))
     for name in ('ms15-on-029y4a-wip.patch',

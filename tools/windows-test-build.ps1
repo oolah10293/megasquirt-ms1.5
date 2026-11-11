@@ -77,7 +77,7 @@ Invoke-OriginalAssembler 'baseline'
 
 # Do not publish a modified copy of the third-party original source.
 # Only include the two original new MS1.5 include files and integration patch.
-foreach ($file in 'ms15_defs.inc','ms15_iac.inc') {
+foreach ($file in 'ms15_defs.inc','ms15_iac.inc','ms15_outputs.inc') {
   $inputFile = Join-Path $repo "firmware\$file"
   $destFile = Join-Path $src $file
   $t = [System.IO.File]::ReadAllText($inputFile)
@@ -131,9 +131,9 @@ if ($LASTEXITCODE -ne 0) { throw "Static checker failed: $LASTEXITCODE" }
 python (Join-Path $repo 'tools\check_ms15_tuning.py') $tree
 if ($LASTEXITCODE -ne 0) { throw "Tuning/source consistency checker failed: $LASTEXITCODE" }
 
-# This is a TEST INI, not a release or a verified TunerStudio GUI configuration.
-Copy-Item (Join-Path $tree 'msns-extra.ini') (Join-Path $results 'MS15-FUEL-ONLY-BENCH-UNVALIDATED.ini') -Force
-Invoke-OriginalAssembler 'MS15-FUEL-ONLY-BENCH-UNVALIDATED'
+# This is the matching INI source for the newly assembled firmware, NOT a release.
+Copy-Item (Join-Path $tree 'msns-extra.ini') (Join-Path $results 'MS15-PROGRAMMABLE-OUTPUTS-UNVALIDATED.ini') -Force
+Invoke-OriginalAssembler 'MS15-PROGRAMMABLE-OUTPUTS-UNVALIDATED'
 
 # Compare map regions and ensure bootloader/calibration image remained unchanged.
 @'
@@ -157,10 +157,10 @@ def parse(path):
     return memory
 
 before = parse(root / "baseline.s19")
-after = parse(root / "MS15-FUEL-ONLY-BENCH-UNVALIDATED.s19")
+after = parse(root / "MS15-PROGRAMMABLE-OUTPUTS-UNVALIDATED.s19")
 shipped = parse(sys.argv[1])
 assert before == shipped, "Assembled original differs from shipped 029y4a image"
-for name in ("baseline","MS15-FUEL-ONLY-BENCH-UNVALIDATED"):
+for name in ("baseline","MS15-PROGRAMMABLE-OUTPUTS-UNVALIDATED"):
     err = (root / (name+".err")).read_text(errors="replace")
     assert "Successful assembly - No errors." in err, f"{name} assembler reported errors: {err}"
 
@@ -173,12 +173,15 @@ assert last <= 0xDFFF, f"Code overflow at {last:04X}"
 assert before != after, "No MS1.5 code changes produced"
 
 # Calibration, lookup and actual bootloader unchanged byte-for-byte.
-# Page 9 previously ended at E870. EXACTLY five new tuning bytes are allowed.
-# Every other calibration/bootloader address remains byte-for-byte unchanged.
-new_cal = set(range(0xE871, 0xE876))
-expected_defaults = [4, 1, 104, 1, 64]  # 4 ms, 360 closing, 320 max
-assert [after.get(k) for k in sorted(new_cal)] == expected_defaults, "Wrong page-9 defaults"
-assert all(before.get(k) is None for k in new_cal), "New calibration addresses were occupied in 029y4a"
+# Page 9 new bytes: prior five IAC settings plus 6 seven-byte output records.
+# Exactly 47 bytes at E871..E89F; original calibration and bootloader unchanged.
+new_cal = set(range(0xE871, 0xE8A0))
+expected_defaults = [4, 1, 104, 1, 64]
+for n in range(6):
+    expected_defaults += [4 if n==3 else 0] + [0]*6
+assert len(expected_defaults)==47, expected_defaults
+assert [after.get(k) for k in sorted(new_cal)] == expected_defaults, "Wrong IAC/output calibration defaults"
+assert all(before.get(k) is None for k in new_cal), "Original source occupied planned new calibration addresses"
 for lo, hi in ((0xE000,0xFAC3),(0xFB00,0x10000)):
     assert all(before.get(k)==after.get(k) for k in range(lo,hi) if k not in new_cal), f"Unexpected protected flash changes in {lo:04X}..{hi:04X}"
 assert all(before.get(k)==after.get(k) for k in range(0xFAC3,0xFACA)), "Fixed vector header changed"
@@ -195,8 +198,8 @@ for index in range(18):
 assert 0xFACA + 18*3 == 0xFB00
 high_changes = [k for k in before.keys()|after.keys() if k>=0xE000 and before.get(k)!=after.get(k)]
 assert set(high_changes).issubset(allowed|new_cal), f"Unexpected high-memory differences: {high_changes}"
-assert set(high_changes)&new_cal == new_cal, "Not all five calibration bytes were added"
-signature = b"MS1/Extra format MS15_001 ******"
+assert set(high_changes)&new_cal == new_cal, "Not all 47 page-9 calibration bytes were added"
+signature = b"MS1/Extra format MS15_002 ******"
 version = b"MS1.5 TEST rev 0.1 *************"
 assert len(signature)==32 and len(version)==32
 main_blob = bytes(after.get(k,0) for k in range(0x8128, 0xE000))
@@ -205,9 +208,9 @@ assert main_blob.count(version)==1, "New 32-byte version missing or duplicate"
 report = [
     "PASS: CASM08Z assembled both images without errors",
     "PASS: Baseline is byte-for-byte identical to shipped 029y4a S19",
-    "PASS: Original calibration tables and bootloader unchanged except exactly five new page-9 bytes",
-    "PASS: New tuning fields at E871-E875: 4 ms low, 360-step home, 320-step max (bench-only defaults)",
-    "PASS: Firmware contains the new 32-byte MS1.5 signature and text version",
+    "PASS: Original calibration tables and bootloader unchanged except exactly 47 new page-9 bytes",
+    "PASS: New tuning fields at E871-E89F: IAC 5 bytes + six 7-byte output records, JS2 fan default",
+    "PASS: Firmware contains matching MS15_002 signature and 32-byte text version",
     f"PASS: {relocations} interrupt vectors correctly relocated ({len(high_changes)} address-byte changes)",
     f"Main-code end: baseline 0x{max(main_before):04X}; MS1.5 0x{last:04X}",
     f"Net occupied program growth: {len(main_after)-len(main_before)} bytes",
@@ -217,6 +220,13 @@ report = [
 ]
 print("\n".join(report))
 (root/"REPORT.txt").write_text("\n".join(report)+"\n")
+from hashlib import sha256
+for file in ('MS15-PROGRAMMABLE-OUTPUTS-UNVALIDATED.s19','MS15-PROGRAMMABLE-OUTPUTS-UNVALIDATED.ini'):
+    path = root / file
+    assert path.is_file(), f'Missing paired build result {path}'
+    digest=sha256(path.read_bytes()).hexdigest()
+    print(f'Paired file SHA256: {file} {digest}')
+    with (root/'REPORT.txt').open('a') as out: out.write(f'{file} SHA256 {digest}\n')
 '@ | Set-Content -Encoding ascii (Join-Path $repo 'check_built_image.py')
 Push-Location $repo
 try {
