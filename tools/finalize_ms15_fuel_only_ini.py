@@ -128,6 +128,55 @@ def transform_integrated(ini: str) -> str:
     result = re.sub(
         r'(?ims)^help\s*=\s*([A-Za-z0-9_]+)\s*,.*?(?=^help\s*=|^\[CurveEditor\])',
         update_help, result)
+    # The [FrontPage] indicators are the selectable dashboard vocabulary.
+    # "indicator" creates a default tile; "indicatorTemplate" adds only a
+    # right-click alternative. Keep TunerStudio's built-in connection,
+    # datalogging and protocol-error tiles under application control.
+    head, front_and_rest = result.split('[FrontPage]', 1)
+    front, tail = front_and_rest.split('[RunTime]', 1)
+    start = front.index('    ;         =   expression')
+    end = front.index(';-------------------------------------------------------------------------------', start)
+    legacy = front[start:end]
+    for stale in ('"Output3 Off"', '"Launch On"', '"Knocked"',
+                  '"NOS/Tables On"', '"LED18 low"'):
+        assert stale in legacy, stale
+    assert len(re.findall(r'(?m)^\s*indicator\s*=', legacy)) == 12
+
+    # Existing 39-byte serial packet supplies port A/C and engine state.
+    # All pin states indicate the MCU's command, not a verified relay load.
+    defaults = [
+        ('porta & 0b00000001', 'Fuel Pump OFF', 'Fuel Pump ON'),
+        ('porta & 0b00100000', 'JS0 STEP low', 'JS0 STEP high'),
+        ('porta & 0b00010000', 'JS1 DIR=0', 'JS1 DIR=1'),
+        ('porta & 0b00001000', 'JS2 Fan cmd low', 'JS2 Fan cmd high'),
+        ('porta & 0b00000100', 'JS3 cmd low', 'JS3 cmd high'),
+        ('porta & 0b00000010', 'FIDLE cmd low', 'FIDLE cmd high'),
+        ('portc & 0b00000001', 'LED17 low', 'LED17 high'),
+        ('portc & 0b00000100', 'LED18 low', 'LED18 high'),
+        ('portc & 0b00000010', 'LED19 low', 'LED19 high'),
+        ('engine & 0b00000001', 'Engine stopped', 'Engine running'),
+        ('engine & 0b00000010', 'Not cranking', 'Cranking'),
+        ('floodclear && (( engine & 3 ) != 1)', 'Flood clear OFF', 'FLOOD CLEAR'),
+        ('portc & 0b10000000', 'Config OK', 'Config ERROR'),
+    ]
+    # Alternatives do not consume another one of the 16 visible blocks.
+    alternatives = [
+        ('engine & 0b00000100', 'ASE OFF', 'Afterstart enrich'),
+        ('engine & 0b00001000', 'WUE OFF', 'Warmup enrich'),
+        ('engine & 0b00010000', 'TPS accel OFF', 'TPS accel ON'),
+        ('engine & 0b00100000', 'TPS decel OFF', 'TPS decel ON'),
+        ('engine & 0b01000000', 'MAP accel OFF', 'MAP accel ON'),
+    ]
+    new_indicators = ['    ; MS1.5 output/status choices; physical pins read as MCU logic states']
+    for kind, group in (('indicator', defaults), ('indicatorTemplate', alternatives)):
+        for expression, off, on in group:
+            colors = ('white, black, red, black' if on == 'Config ERROR'
+                      or on == 'FLOOD CLEAR' else 'white, black, green, black')
+            new_indicators.append(
+                f'    {kind} = {{ {expression} }}, "{off}", "{on}", {colors}')
+    front = front[:start] + eol.join(new_indicators) + eol + front[end:]
+    result = head + '[FrontPage]' + front + '[RunTime]' + tail
+
     assert {'rotarysettings','nossystem','boostcontrol','knock','launchsettings','hardlim'} <= removed_dialogs,removed_dialogs
     assert 'subMenu = idleControl' in result and 'subMenu = ms15FanControl' in result
     assert 'subMenu = RevLimiterS' in result and 'subMenu = veTable1Tbl' in result
