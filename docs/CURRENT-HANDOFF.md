@@ -4,6 +4,14 @@ Updated: 2026-11-10. This is a **documentation-only checkpoint**. It does not au
 
 **Read this file, the current Git history, and relevant code before proceeding. Do not rely on conversation memory for the project state.**
 
+## CURRENT: COMPLETE SOURCE-ONLY FUEL CLEANUP (2026-11-10)
+
+**The latest source state supersedes the older assembled bench-test snapshot.** Read [completed source-only cleanup record](FUEL-ONLY-SOURCE-CLEANUP-2026-11-10.md). Development branch `ms15-ignition-removal`, latest source code/test checkpoint `d649aa297bd6c419ec5aa994a361b3bce25e9b82`. Source-only GitHub Actions [run 42932812680](https://github.com/oolah10293/megasquirt-ms1.5/actions/runs/42932812680) **PASSED** against full patched 029y4a: 3 actual MS1.5 patches, both transformations, six regression tests, existing source and tuning/INI checkers. No CASM08Z invocation and no new S19/INI firmware build was performed. **Do not flash the old previously assembled S19 as if it contained this work.**
+
+The finalizer physically removes residual launch, traction, nitrous/staged-fuel adders, water injection, knock, spark/dwell, boost-actuator, generic output and spark-timer paths, preserving real fuel and RPM calculation, dual 12x12 VE, AFR, closed-loop STEP/DIR IAC, VE3 table delay, single fan and old tune page layout. An active *nonblocking* invalid-fan-hysteresis check sets the old config-error status bit for telemetry and forces fan on, but never halts the injector or tuning serial protocol. Original nonignition X2-water and nitrous-water conflict errors are intentionally obsolete since those actuators were removed. Legacy spark/knock serial fields are held at zero; deprecated flash bytes remain in place for ABI/tune migration.
+
+**User explicitly permitted source edits, reviews and nonbuilding tests only. No authorization for assembly, packaging, a release, flashing or deployment exists for this revision.** Next phase requires separate explicit authorization and validation on actual hardware. Treat the old successful CASM08Z bench image below as historical, not current.
+
 ## LATEST INDEPENDENT ARTIFACT AUDIT (2026-11-10)
 
 The exact CASM08Z success and bench-only artifact from Actions run `42921957431` were independently verified by downloading and decoding the original CI ZIP. See [independent S19/vector/fuel/INI audit](FUEL-ONLY-INDEPENDENT-ARTIFACT-AUDIT-2026-11-10.md), commit `3f44596e0b81db4d2386c082ce48bd95b3e38b36`. All S19 checksums and 18 vector targets were checked; TIM2 Ch1 points to `Dummy`, while IRQ and TIM2 Ch0 remain active. The compiled fuel/AFR, fan, and IAC code sites and matching INI were checked; net code memory saving is 11,825 occupied bytes relative to the previous custom MS1.5 image.
