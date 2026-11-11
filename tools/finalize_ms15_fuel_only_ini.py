@@ -177,6 +177,79 @@ def transform_integrated(ini: str) -> str:
     front = front[:start] + eol.join(new_indicators) + eol + front[end:]
     result = head + '[FrontPage]' + front + '[RunTime]' + tail
 
+    # Six physical outputs share seven serial-burnable page-9 bytes each.
+    # Store exactly 42 new bytes at 118..159, leaving old settings at their
+    # original offsets and the page's 189-byte transfer length unchanged.
+    src_options=[
+        'Disabled', 'RPM above', 'RPM below',
+        'Coolant above', 'Coolant below',
+        'TPS above', 'TPS below',
+        'MAP above', 'MAP below',
+        'Battery above', 'Battery below',
+        'Engine running', 'Engine cranking',
+    ]
+    modes=['Disabled','Condition A','A AND B','A OR B']
+    cfg_definitions=[]
+    output_dialogs=[]
+    output_menus=[]
+    names=('LED17','LED18','LED19','JS2','JS3','FIDLE')
+    fields=(('Mode','mode'),('SourceA','src_a'),('OnA','on_a'),
+            ('OffA','off_a'),('SourceB','src_b'),('OnB','on_b'),
+            ('OffB','off_b'))
+    for index,name in enumerate(names):
+        offset=118+index*7
+        mode_opts=modes+(['Cooling fan'] if index==3 else [])
+        mopts=', '.join('"'+x+'"' for x in mode_opts)
+        sopts=', '.join('"'+x+'"' for x in src_options)
+        for j,(ui,sym) in enumerate(fields):
+            key=f'ms15Out{index}{ui}'
+            if j==0:
+                decl=f'      {key} = bits, U08, {offset+j}, [0:2], {mopts}'
+            elif sym in ('src_a','src_b'):
+                decl=f'      {key} = bits, U08, {offset+j}, [0:3], {sopts}'
+            else:
+                decl=f'      {key} = scalar, U08, {offset+j}, "raw", 1, 0, 0, 255, 0'
+            cfg_definitions.append(decl)
+        menu_key=f'ms15Output{index}'
+        output_menus.append(f'      subMenu = {menu_key}, "{name} Programmable Output", 9')
+        active=f'{{ ms15Out{index}Mode > 0 && ms15Out{index}Mode < 4 }}'
+        second=f'{{ ms15Out{index}Mode == 2 || ms15Out{index}Mode == 3 }}'
+        output_dialogs += [
+            f'   dialog = {menu_key}, "{name} Programmable Output", 9',
+            '      field = "#Each output evaluates two conditions at up to 10 Hz"',
+            '      field = "#Above: ON >= setpoint, OFF <= reset; Below reverses"',
+            '      field = "#Units: RPM /100; CLT F+40; MAP kPa; TPS/BATT ADC"',
+            f'      field = "Output mode", ms15Out{index}Mode',
+            f'      field = "Condition A source", ms15Out{index}SourceA, {active}',
+            f'      field = "A turn-on threshold (raw)", ms15Out{index}OnA, {active}',
+            f'      field = "A turn-off threshold (raw)", ms15Out{index}OffA, {active}',
+            f'      field = "Condition B source", ms15Out{index}SourceB, {second}',
+            f'      field = "B turn-on threshold (raw)", ms15Out{index}OnB, {second}',
+            f'      field = "B turn-off threshold (raw)", ms15Out{index}OffB, {second}',
+            '',
+        ]
+    assert len(cfg_definitions)==42 and len(output_menus)==6
+    cfg_insert=eol+'       ; MS1.5 programmable outputs: six 7-byte records, p9 118..159'+eol
+    cfg_insert+=eol.join(cfg_definitions)+eol
+    cfg_anchor='       iacMaxSteps   = scalar, U16, 116, "steps", 1, 0, 0, 510, 0'
+    assert result.count(cfg_anchor)==1
+    result=result.replace(cfg_anchor,cfg_anchor+cfg_insert)
+    menu_anchor='subMenu = ms15FanControl, "Cooling Fan (JS2)"'
+    assert result.count(menu_anchor)==1
+    result=result.replace(menu_anchor,menu_anchor+eol+
+        '      ; MS1.5 programmable output controls'+eol+eol.join(output_menus))
+    dialog_anchor='      field = "Fan OFF coolant temp", efanofftemp'
+    assert result.count(dialog_anchor)==1
+    result=result.replace(dialog_anchor,dialog_anchor+eol+eol.join(output_dialogs))
+    # The front-page indicator code above deliberately edits no calibration.
+    # For the new page-9 fields, byte-exact preservation of all original
+    # constants is checked by removing our one appended declaration section.
+    def constants(t):
+        return t.split('[Constants]',1)[1].split('[Menu]',1)[0]
+    assert constants(result).replace(cfg_insert,'')==constants(ini)
+    assert result.count('dialog = ms15Output')==6
+    assert result.count('subMenu = ms15Output')==6
+
     assert {'rotarysettings','nossystem','boostcontrol','knock','launchsettings','hardlim'} <= removed_dialogs,removed_dialogs
     assert 'subMenu = idleControl' in result and 'subMenu = ms15FanControl' in result
     assert 'subMenu = RevLimiterS' in result and 'subMenu = veTable1Tbl' in result
@@ -186,10 +259,6 @@ def transform_integrated(ini: str) -> str:
         assert not re.search(r'(?im)^\s*subMenu\s*=\s*'+retired+r'\b', result), retired
     for help_id in FUEL_HELP:
         assert re.search(r'(?im)^help\s*=\s*'+help_id+r'\b', result), help_id
-    # This is deliberately a strict byte-level calibration section guard.
-    def constants(t):
-        return t.split('[Constants]',1)[1].split('[Menu]',1)[0]
-    assert constants(result)==constants(ini)
     menu=result.split('[Menu]',1)[1].split('[UserDefined]',1)[0]
     for line in menu.splitlines():
         m=re.match(r'^\s*subMenu\s*=\s*(\w+)',line,re.I)
