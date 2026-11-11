@@ -412,7 +412,7 @@ MS15_VE3_OFF:
     # CASM08Z found that the injector LED fanout lengthened the existing
     # firing2 branch past HC08's signed 8-bit relative range. Keep exactly
     # the same branch condition but use a short inverse branch + absolute JMP.
-    edge_branch=re.compile(r'(?im)^([ \\t]*)brset[ \\t]+firing2,squirt,CHK_DONE_2JMP\\b')
+    edge_branch=re.compile(r'(?im)^([ \t]*)brset[ \t]+firing2,squirt,CHK_DONE_2JMP\b')
     replacement=(
         '        brclr   firing2,squirt,MS15_I2_SKIP'+eol+
         '        jmp     CHK_DONE_2JMP'+eol+
