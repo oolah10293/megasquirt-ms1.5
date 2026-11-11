@@ -39,6 +39,42 @@ def transform_integrated(source: str) -> str:
     replace(matchline(r'^\s*bset\s+launch,ptdpue'),
             matchline(r'^\s*bset\s+launch,ptdpue') + 1, '', 'launch input pullup')
 
+    # Strip the last startup spark-output3 GPIO and obsolete state writes.
+    # Fuel RAM, all fuel-derived clocks, and alternating-injector counters
+    # remain initialized by the original source.
+    replace(matchline(r'^\s*brset\s+out3sparkd,feature2,w_no3'),
+            find('w_no3')+1,'','delete last spark-only output3 initializer')
+    obsolete_boot = ('splitdelH','splitdelL','KnockAngleRet','KnockAdv',
+        'KnockTimLft','KnockAngle','TCAngle','KnockBoost','CltIatAngle',
+        'N2Olaunchdel','NitrousAngle','NosPW')
+    for symbol in obsolete_boot:
+        found=[i for i,l in enumerate(lines[:find('chk_out')])
+               if re.match(r'^\s*sta\s+'+symbol+r'\s*(?:;.*)?$',l,re.I)]
+        assert len(found)==1,(symbol,found)
+        replace(found[0],found[0]+1,'','remove unused startup '+symbol)
+    for n in range(1,7):
+        i=matchline(r'^\s*sthx\s+dwelldelay'+str(n)+r'\s*$')
+        replace(i,i+1,'','delete unused ignition dwell RAM init')
+    # The old dynamic N2O pulse width was added in three separate stages
+    # of the *real* staged fuel calculation. Removing it leaves all injector
+    # and staged-fuel calculations but no hidden nitrous fuel adder.
+    nos_add=[i for i,l in enumerate(lines) if re.match(r'^\s*add\s+NosPW\s*$',l,re.I)]
+    assert len(nos_add)==3,nos_add
+    for i in nos_add: replace(i,i+1,'','remove nitrous PW from staged fuel')
+    # Former spark-table-2 delay has no consumers after ignition removal;
+    # in contrast VE3Timer is an active, useful fuel-table selection delay.
+    replace(matchline(r'^\s*lda\s+Spark2Delay_f\s*$'),
+            matchline(r'^\s*sta\s+ST2Timer\s*; Set delay timer for ST2')+1,
+            '', 'no spark-2 timer at boot')
+    replace(matchline(r'^\s*lda\s+ST2Timer\s*$'),
+            matchline(r'^\s*lda\s+VE3Timer\s*; VE Table3 delay timer'),
+            '', 'no spark timer at 0.1s tick')
+    replace(matchline(r'^\s*brclr\s+NosIn,portd,No_St2Delay'),
+            matchline(r'^\s*brset\s+taeIgnCount,feature1,No_TPSCount'),
+            '', 'remove spark-table switch delay only; keep VE3 timer')
+    i=matchline(r'^\s*inc\s+Out3Timer\s*$')
+    replace(i,i+1,'','remove dead general-output timer')
+
     # No shift LEDs/secondary-ignition outputs. Keep three standard panel LEDs.
     i = matchline(r'^\s*lda\s+#%00011111\s*$')
     replace(i, i+1, '        lda     #%00000111\n', 'only standard fuel status LEDs')
@@ -264,6 +300,14 @@ MS15_VE3_OFF:
         lines[a:b] = [body] if body else []
     result = ''.join(lines)
     assert result != source
+    # Keep old RAM layout but expose the formerly spark-named byte only as
+    # a prime-pulse counter. Historical symbol retains its storage address.
+    result, count = re.subn(r'(?im)^(\s*(?:lda|sta|inc|clr|dec)\s+)TCSparkCut\b',
+                            r'\1MS15_PrimeCount', result)
+    assert count==5,count
+    inc='include "msns-extra.h"'
+    assert result.count(inc)==1
+    result=result.replace(inc,inc+eol+'MS15_PrimeCount  equ TCSparkCut ; priming, not ignition')
     return result
 
 
