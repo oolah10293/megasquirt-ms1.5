@@ -1,0 +1,44 @@
+name: MS1.5 integrated fuel-only source checks (NO BUILD)
+
+on:
+  push:
+    branches: [ms15-ignition-removal]
+    paths:
+      - 'tools/**'
+      - 'tests/**'
+      - 'firmware/**'
+      - 'patches/**'
+      - '.github/workflows/ms15-source-only.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-source-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Retrieve SHA-pinned historical source archive (no firmware build)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ms15source
+          target=/tmp/ms15source/029y4a.zip
+          expected=212ebf0a795973146e993571cc421ad89f4bfc541a62bb4cd12de0fff8ca7790
+          for url in \
+            'https://forum.motorkontrolle.de/download/file.php?id=1527' \
+            'https://www.msextra.com/doc/ms1extra/Downloads/029y4a.zip' \
+            'https://msextra.com/doc/ms1extra/Downloads/029y4a.zip'; do
+            if curl --fail --location --silent --show-error --max-time 25 --connect-timeout 8 -o "$target" "$url"; then
+              observed=$(sha256sum "$target" | cut -d' ' -f1)
+              if [[ "$observed" == "$expected" ]]; then
+                echo 'SHA-pinned original source verified'
+                break
+              fi
+            fi
+          done
+          test "$(sha256sum "$target" | cut -d' ' -f1)" = "$expected"
+      - name: Reproduce patched firmware source and validate without building
+        run: python tools/verify_integrated_source_only.py /tmp/ms15source/029y4a.zip /tmp/ms15source/work
