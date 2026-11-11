@@ -150,6 +150,45 @@ class FinalSourceOnly(unittest.TestCase):
         self.assertIn('soft delay counts in 0.1 second ticks',ini.lower())
         self.assertIn('table-select input goes low',ini)
 
+    def test_dashboard_choices_use_real_output_channels(self):
+        # Source-only INI check: 13 default ECU indicators plus TunerStudio's
+        # own application states, with additional right-click-only choices.
+        if not INTEGRATED_INI:
+            self.skipTest('Requires matching integrated TunerStudio INI')
+        front=self.integrated_ini.split('[FrontPage]',1)[1].split('[RunTime]',1)[0]
+        defaults=re.findall(r'(?im)^\s*indicator\s*=',front)
+        optional=re.findall(r'(?im)^\s*indicatorTemplate\s*=',front)
+        self.assertEqual(len(defaults),13)
+        self.assertEqual(len(optional),5)
+        expected={
+            'Fuel Pump ON':'porta & 0b00000001',
+            'JS0 STEP high':'porta & 0b00100000',
+            'JS1 DIR=1':'porta & 0b00010000',
+            'JS2 Fan cmd high':'porta & 0b00001000',
+            'JS3 cmd high':'porta & 0b00000100',
+            'FIDLE cmd high':'porta & 0b00000010',
+            'LED17 high':'portc & 0b00000001',
+            'LED18 high':'portc & 0b00000100',
+            'LED19 high':'portc & 0b00000010',
+            'Engine running':'engine & 0b00000001',
+            'Cranking':'engine & 0b00000010',
+            'Config ERROR':'portc & 0b10000000',
+            'FLOOD CLEAR':'floodclear && (( engine & 3 ) != 1)',
+        }
+        for label,expr in expected.items():
+            self.assertIn('{ '+expr+' }',front,label)
+            self.assertIn('"'+label+'"',front,label)
+        for retired in ('Output3 On','Launch On','Knocked','NOS/Tables On',
+                        'Fidle/Spark'):
+            self.assertNotIn(retired,front,retired)
+        for template in ('Afterstart enrich','Warmup enrich','TPS accel ON',
+                         'TPS decel ON','MAP accel ON'):
+            self.assertIn('"'+template+'"',front,template)
+        # Not Connected, Data Logging and Protocol Error are TunerStudio
+        # application states, not fake ECU status bits.
+        for native in ('Not Connected','Data Logging','Protocol Error'):
+            self.assertNotIn('"'+native+'"',front)
+
     def test_all_remaining_legacy_runtime_identifiers_are_accounted_for(self):
         # Audit the *entire integrated* assembly, not a handful of snippets.
         # Historical flash DB/equ fields are deliberately kept in-place for
