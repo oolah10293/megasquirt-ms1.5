@@ -4,6 +4,20 @@ Updated: 2026-11-10. This is a **documentation-only checkpoint**. It does not au
 
 **Read this file, the current Git history, and relevant code before proceeding. Do not rely on conversation memory for the project state.**
 
+## FINAL SOURCE-ONLY REFINEMENTS, VERIFIED AGAINST FULL INTEGRATION (2026-11-10 local / 2026-11-11 UTC)
+
+**Most recent source/test commit:** `a692d559259aabbbd8856651a4ef38f74d065f91` on `ms15-ignition-removal`. **Source-only CI run [42944883755](https://github.com/oolah10293/megasquirt-ms1.5/actions/runs/42944883755) passed:** upstream archive pinned by SHA, all three real integration patches, two ignition/racing source cleanup transforms, two INI transforms, original source/tuning checkers, and **9 actual integrated-source regression tests**. This was a Linux source-only workflow; it did NOT invoke an assembler, generate an S19/INI image artifact, flash, or deploy anything.
+
+Additional corrections beyond the prior six-test cleanup:
+- `538f783`: when VE3 fuel-table selection is turned off in configuration, explicitly clear the previously latched `UseVE3` flag. Prevents stale VE3 fueling/AFR targeting; the optional input and fuel-table switch remain supported.
+- `93ae240`, `2837ffd`: retire misleading ignition, NOS, launch, hard-cut-type and wheel help topics and update the retained fuel-table and fuel rev-limit help. Keep all [Constants] offsets, page sizes, signatures and useful UI.
+- `a69792a`: physically delete unused source-level dwell/spark temp aliases (no RAM reallocation). Rename the original fuel-only extra-cranking-fuel bit reference to `MS15_ExtraCrankGate`, preserving its original `NosDcOk` bit number/semantics.
+- `0eef97c`, `0b9d8b1`, `a692d55`: add strict tests for VE3 latch reset, legacy help, extra-cranking fuel and exact allowlist of surviving instructions carrying historical spark/racing identifiers. Inspect `tools/verify_integrated_source_only.py` logs for the full 53-line residual-name audit; almost all are calibration DB/EQU fields intentionally retained for old tune ABI.
+
+**Runtime legacy-name allowlist is exactly six instructions:** pullup and read of the optional VE3 fuel-table input (old `NosIn` pin), the TIM2 channel-1 ignition timer disable and interrupt disable, and zero initialization of the `SparkAngle`/`KnockAngle` serial telemetry placeholders. No coil firing, dwell scheduling, spark table runtime, ignition output validation, nitrous/launch/traction/boost output routine or serial-blocking configuration loop remains. The fan hysteresis order validation still sets a **nonblocking** diagnostic flag and fails fan ON; water/NOS conflicts are obsolete because those output modules are removed. The six-instruction allowlist is now a regression **failure gate**, not just printed diagnostics.
+
+**Do not use prior assembled bench S19 as this revision.** It predates all later fuel-only cleanup. This revision is SOURCE-CHECKED ONLY, not CASM08Z-assembled, Stim-tested or engine-ready. Current user authorization expressly prohibits a build, release, packaging, flash or deployment. The `ms15-test-build` auto-build branch was not modified. A future assembly and bench checks require **separate explicit permission**.
+
 ## CURRENT: COMPLETE SOURCE-ONLY FUEL CLEANUP (2026-11-10)
 
 **The latest source state supersedes the older assembled bench-test snapshot.** Read [completed source-only cleanup record](FUEL-ONLY-SOURCE-CLEANUP-2026-11-10.md). Development branch `ms15-ignition-removal`, latest source code/test checkpoint `d649aa297bd6c419ec5aa994a361b3bce25e9b82`. Source-only GitHub Actions [run 42932812680](https://github.com/oolah10293/megasquirt-ms1.5/actions/runs/42932812680) **PASSED** against full patched 029y4a: 3 actual MS1.5 patches, both transformations, six regression tests, existing source and tuning/INI checkers. No CASM08Z invocation and no new S19/INI firmware build was performed. **Do not flash the old previously assembled S19 as if it contained this work.**
