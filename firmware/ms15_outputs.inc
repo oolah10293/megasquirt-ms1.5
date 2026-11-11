@@ -268,9 +268,9 @@ MS15_OUT_ABOVE_SWITCH_ON:
 MS15_OUT_ABOVE_WAS_ON:
         lda     MS15_OUT_VALUE
         cmp     MS15_OUT_OFF
-        bhi     MS15_OUT_ABOVE_STAY_ON
+        bhi     O15_ABOVE_KEEP
         jmp     MS15_OUT_FALSE
-MS15_OUT_ABOVE_STAY_ON:
+O15_ABOVE_KEEP:
         jmp     MS15_OUT_TRUE
 
 MS15_OUT_BELOW:
@@ -292,9 +292,9 @@ MS15_OUT_BELOW_SWITCH_ON:
 MS15_OUT_BELOW_WAS_ON:
         lda     MS15_OUT_VALUE
         cmp     MS15_OUT_OFF
-        blo     MS15_OUT_BELOW_STAY_ON
+        blo     O15_BELOW_KEEP
         jmp     MS15_OUT_FALSE
-MS15_OUT_BELOW_STAY_ON:
+O15_BELOW_KEEP:
         jmp     MS15_OUT_TRUE
 
 MS15_OUT_TRUE:
@@ -310,7 +310,7 @@ MS15_OUT_FALSE:
         sta     MS15_OUT_LATCH
 MS15_OUT_EVAL_RETURN:
         lda     MS15_OUT_PHASE
-        bne     MS15_OUT_EVAL_RETURN_B
+        bne     O15_EVAL_RET_B
         jmp     MS15_OUT_AFTER_A
-MS15_OUT_EVAL_RETURN_B:
+O15_EVAL_RET_B:
         jmp     MS15_OUT_AFTER_B
