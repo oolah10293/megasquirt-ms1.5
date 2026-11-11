@@ -1,3 +1,8 @@
+; AI/AGENT HANDOFF: Before editing or interpreting this firmware, read
+; docs/CURRENT-HANDOFF.md and AGENTS.md and inspect latest Git commits.
+; Commit source-only progress frequently; NEVER build/flash without explicit
+; owner authorization. Verify the latest source/bench state, not just comments.
+;
 ; --------------------------------------------------------------------------
 ; MS1.5 (WIP, UNBUILT) - original stepper controller definitions
 ; Target: original MS1 HC908GP32, 029y4a, V3.0 mainboard.

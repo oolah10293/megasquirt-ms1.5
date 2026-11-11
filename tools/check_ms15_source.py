@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """Source-only MS1.5 checks. NOT an assembler or firmware build.
 
+AI/AGENT HANDOFF: Read docs/CURRENT-HANDOFF.md and AGENTS.md and inspect
+current Git commits before editing. Do not build or flash without explicit
+owner authorization.
+
 Usage: python tools/check_ms15_source.py /path/to/extracted/029y4a/src
 
 Apply patches/ms15-on-029y4a-wip.patch with GNU patch --binary -p1

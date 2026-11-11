@@ -1,4 +1,4 @@
-# Test assembly of original MS1/Extra 029y4a and MS1.5 WITH tuning updates.
+# Authorized bench-only CASM08Z assembly of FINAL MS1.5 fuel-only source and INI.
 # Runs only on disposable Windows GitHub Actions runner.
 # IMPORTANT: test image is NOT safe to flash or deploy to an engine.
 $ErrorActionPreference = 'Stop'
@@ -97,6 +97,14 @@ try {
 
 # Fuel-only source transform and menu cleanup. Owner explicitly authorized
 # a test assembly on 2026-11-10; this job NEVER flashes hardware.
+# Keep the *actual fully patched* preclean assembly/INI in the source tree
+# for the integrated regression test; no assembler has been called for this
+# modified source yet. The original baseline above is unchanged.
+$env:MS15_INTEGRATED_ASM = Join-Path $src 'ms15-integrated-source-preclean.asm'
+$env:MS15_INTEGRATED_INI = Join-Path $tree 'ms15-integrated-preclean.ini'
+$env:MS15_REQUIRE_INTEGRATED = '1'
+Copy-Item (Join-Path $src 'msns-extra.asm') $env:MS15_INTEGRATED_ASM -Force
+Copy-Item (Join-Path $tree 'msns-extra.ini') $env:MS15_INTEGRATED_INI -Force
 $env:MS15_ORIGINAL_ZIP = $zip
 $env:MS15_TUNING_INI = Join-Path $tree 'msns-extra.ini'
 python -m unittest discover -s (Join-Path $repo 'tests') -p 'test_ms15_fuel_only_full.py' -v
@@ -105,6 +113,17 @@ python (Join-Path $repo 'tools\remove_ms15_ignition_full.py') (Join-Path $src 'm
 if ($LASTEXITCODE -ne 0) { throw "Fuel-only ignition removal failed: $LASTEXITCODE" }
 python (Join-Path $repo 'tools\simplify_ms15_fuel_only_ini.py') (Join-Path $tree 'msns-extra.ini')
 if ($LASTEXITCODE -ne 0) { throw "Fuel-only INI cleanup failed: $LASTEXITCODE" }
+
+# The previous bench-image script stopped after ignition stage one.
+# Current source cleanup must also remove launch/NOS/knock/boost code
+# and its old TunerStudio dialog/help entries before any assembly.
+python (Join-Path $repo 'tools\finalize_ms15_fuel_only.py') (Join-Path $src 'msns-extra.asm')
+if ($LASTEXITCODE -ne 0) { throw "Full fuel-only source finalization failed: $LASTEXITCODE" }
+python (Join-Path $repo 'tools\finalize_ms15_fuel_only_ini.py') (Join-Path $tree 'msns-extra.ini')
+if ($LASTEXITCODE -ne 0) { throw "Full fuel-only INI finalization failed: $LASTEXITCODE" }
+python -m unittest discover -s (Join-Path $repo 'tests') -p 'test_ms15_source_final_cleanup.py' -v
+if ($LASTEXITCODE -ne 0) { throw "Integrated final fuel-only regression tests failed: $LASTEXITCODE" }
+
 
 # Run only STATIC checks: no hardware interaction.
 python (Join-Path $repo 'tools\check_ms15_source.py') $src
