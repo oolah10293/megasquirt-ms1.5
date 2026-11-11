@@ -4,6 +4,12 @@ Updated: 2026-11-10. This is a **documentation-only checkpoint**. It does not au
 
 **Read this file, the current Git history, and relevant code before proceeding. Do not rely on conversation memory for the project state.**
 
+## FOLLOW-UP OWNER-REPORTED POWER-CYCLE / CLOSED-LOOP IAC SETTING (2026-11-10 local)
+
+After confirming the final fuel-only ECU boots and TunerStudio connects on the Stim, the owner reports **two successful power-cycle/reconnection checks**: first, a normal ECU power cycle, and second, changing the IAC setting to **closed loop ON** and cycling power again. The owner says the controller **came back without a problem** in both cases. This is strong owner-reported evidence that the previous MSnS spark-output configuration lockout is not triggered by this IAC setting on restart. This result is **hardware-observed by the owner, not independently reproduced by the assistant**.
+
+The owner has not explicitly stated whether the changed IAC setting still displayed as ON **after** the second restart, or the exact burn/write action used; do **not** mark settings-flash persistence verified until confirmed. No STEP/DIR motion, valve homing/direction, RPM/injector waveforms, wideband, fan or running-engine behavior has been established by this particular test. **Next simple check:** inspect whether TunerStudio still shows IAC closed loop ON after reconnect, then test STEP/DIR outputs with the motor driver safely isolated. No new software build or deployment follows from this observation.
+
 ## NEW OWNER-REPORTED STIM/ECU BOOT AND TUNERSTUDIO CONNECTION (2026-11-10 local)
 
 Following the flashing instructions for the final fuel-only bench-test image (assembly commit `6c1621e7`), the owner reports: **“the megasquirt is up and running and tunerstudio is connected.”** This is owner-reported actual-device boot and live serial-connection evidence, **not independently verified** by loader output, signature capture, hardware telemetry, or firmware readback. Exact flash image and TS definition are inferred from the immediately preceding instructions and should be confirmed if required. Do not mark injector, idle STEP/DIR, fan, AFR, setting burn, power-cycle reconnection, fault handling, or engine operation as tested. The prior lockout occurred after burn/power cycle; **next low-risk bench test is to power-cycle the Stim/ECU and confirm TunerStudio reconnects without a configuration error**; then explicitly test persistence/burn and outputs in stages. No new source changes or assembly are implied by this report.
