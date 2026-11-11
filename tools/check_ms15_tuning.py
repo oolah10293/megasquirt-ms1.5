@@ -45,8 +45,8 @@ for line in ini.splitlines():
         shape = re.search(r"\[\s*(\d+)(?:x(\d+))?", line)
         assert shape, f"Array without shape: {name}"
         count *= int(shape.group(1)) * (int(shape.group(2)) if shape.group(2) else 1)
-    if typ == "bits":
-        continue  # shares a byte by design
+    if typ == "bits" and at < 113:
+        continue  # original low-offset feature-bit aliases share bytes
     for i in range(count):
         pos = at + i
         # Legacy CELSIUS/Fahrenheit and MAP/MAF branches deliberately
