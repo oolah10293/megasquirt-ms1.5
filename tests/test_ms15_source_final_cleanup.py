@@ -150,6 +150,33 @@ class FinalSourceOnly(unittest.TestCase):
         self.assertIn('soft delay counts in 0.1 second ticks',ini.lower())
         self.assertIn('table-select input goes low',ini)
 
+    def test_all_remaining_legacy_runtime_identifiers_are_accounted_for(self):
+        # Audit the *entire integrated* assembly, not a handful of snippets.
+        # Historical flash DB/equ fields are deliberately kept in-place for
+        # older tune compatibility; actual instructions must be an exact
+        # allow-list of harmless placeholders and the VE3 fuel input.
+        src=cleaned_source(self.integrated or self.cleaned)
+        suspicious=re.compile(
+            r'\b(?:spark\w*|coil\w*|dwell\w*|knock\w*|launch\w*'
+            r'|nitrous\w*|nos\w*|boost\w*|tract\w*'
+            r'|shiftlight\w*|T2SC1|T2CH1\w*)\b',re.I)
+        allowed={
+            'bset nosin,ptdpue',              # VE3 input pull-up
+            'brset nosin,portd,ms15_ve3_off', # VE3 input only
+            'mov #%00010000,t2sc1',         # disable compare output
+            'bclr toie,t2sc1',              # disable compare interrupt
+            'sta sparkangle',               # zero serial telemetry
+            'sta knockangle',               # zero serial telemetry
+        }
+        live=[]
+        for line in src.splitlines():
+            if not suspicious.search(line):continue
+            if line.endswith(':'):continue
+            if re.search(r'\b(?:equ|db|dw|ds|rmb)\b',line,re.I):continue
+            live.append(' '.join(line.lower().split()))
+        self.assertEqual(set(live),allowed,live)
+        self.assertEqual(len(live),len(allowed),live)
+
     def test_no_dangling_original_labels(self):
         prior=symbols(self.full)
         deleted=prior-symbols(self.cleaned)
