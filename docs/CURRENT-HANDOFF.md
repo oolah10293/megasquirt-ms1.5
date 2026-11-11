@@ -1,5 +1,13 @@
 # Active engineering handoff — MegaSquirt MS1.5
 
+## SOURCE-ONLY DASHBOARD INDICATOR OPTIONS (2026-11-10 local / 2026-11-11 UTC)
+
+**Current status: INI source changed and integrated source-only CI passed; NOT newly assembled, GUI-tested, released or flashed.** Owner asked to clean the selectable 16-block dashboard indicators, separate from the future six-output programmable logic. Development source checkpoint: `dd3be999472ba7619136522c32a117e49def36ff`. [Source-only Actions run 42954738900](https://github.com/oolah10293/megasquirt-ms1.5/actions/runs/42954738900) completed successfully with new indicator regression coverage. Do NOT update `ms15-test-build` without explicit authorization: it triggers the assembler workflow.
+
+`tools/finalize_ms15_fuel_only_ini.py` now replaces the legacy `[FrontPage]` list while retaining all gauge definitions, constants, tune page offsets, telemetry packet size and MCU firmware. There are **13 default ECU indicators** (fuel pump, JS0 STEP, JS1 DIR, JS2 fan command, JS3, FIDLE, LED17, LED18, LED19, engine running, cranking, flood clear, configuration error) plus **five `indicatorTemplate` right-click-only choices** (afterstart enrichment, warmup enrichment, TPS acceleration, TPS deceleration, MAP acceleration). This follows the documented TunerStudio `indicatorTemplate` syntax: new choices do not consume extra dashboard positions. It removes the dead Launch/Knock/NOS/Output3 entries instead of continuing to display raw input bits under those obsolete names. TunerStudio-managed Not Connected, Protocol Error and Data Logging are untouched. Physical pin indicators report *processor command bits*, not proof that attached relays energized. Existing project dashboard customization may need reselecting choices.
+
+The programmable outputs (independent trigger sources, thresholds, AND/OR logic and relay writers) remain **proposed only**, not implemented by this INI cleanup. The 13 default slots plus TunerStudio application indicators are a proposal for the default dashboard; actual display layout/right-click selection requires a TunerStudio GUI check. Existing engine/Stim observations are recorded below and do not establish this INI change's behavior.
+
 Updated: 2026-11-10. This is a **documentation-only checkpoint**. It does not authorize modifying firmware, building, releasing, or flashing anything.
 
 **Read this file, the current Git history, and relevant code before proceeding. Do not rely on conversation memory for the project state.**
