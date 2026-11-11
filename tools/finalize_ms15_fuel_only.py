@@ -65,14 +65,19 @@ def transform_integrated(source: str) -> str:
     block('error_vector','WWURANGE','',
           'delete 15 dead spark/water/nitrous error messages')
 
-    # Real fan validation is nonblocking and fails safe to FAN_ON if the
-    # temperature thresholds have no positive hysteresis. This uses the
-    # actual F-40 degrees encoded fan parameters; water/NOS conflict faults
-    # are obsolete because all water/NOS output writers are removed below.
+    # Restore a REAL non-ignition configuration check: invalid fan on/off
+    # hysteresis is reported through the existing config_error status bit.
+    # Crucially, it NEVER blocks fuel, serial communication, or runtime:
+    # fail-safe engages the fan. The old water/fan & nitrous/water errors
+    # were conflicts between functions we have now physically deleted.
     replace(find('DO_FAN_Check'), find('FAN_OFF'), '''DO_FAN_Check:
         lda     EfanOnTemp_f
         cmp     EfanOffTemp_f
-        bls     FAN_ON          ; invalid/reversed threshold: cool engine
+        bhi     MS15_FAN_LIMITS_OK
+        bset    config_error,feature2  ; nonblocking diagnostic, not lockout
+        jmp     FAN_ON          ; invalid/reversed threshold: cool engine
+MS15_FAN_LIMITS_OK:
+        bclr    config_error,feature2
         brset   crank,engine,FAN_OFF
         lda     coolant
         cmp     EfanOnTemp_f
