@@ -220,13 +220,17 @@ MS15_SOFT_DONE:
     block('Knock_Detection', 'Prime_Checked', '', 'remove knock and traction')
     # Keep useful VE3 and AFR tables, but no boost/nitrous subloop.
     block('Prime_Checked', 'No_VE_Table_3', '''Prime_Checked:
-        ; The only optional switching here is the second VE table.
+        ; VE3 is optional FUEL mapping; clear its active latch whenever
+        ; disabled in a tune, even if the input was previously selected.
         lda     feature6_f
         bit     #VETable3b
-        beq     No_VE_Table_3
+        bne     MS15_CHECK_VE3_OPTION
+        bclr    UseVE3,EnhancedBits
+        bra     No_VE_Table_3
+MS15_CHECK_VE3_OPTION:
         jsr     Check_VE3_Table
 
-''', 'remove boost and nitrous invocation')
+''', 'remove boost/nitrous invocation and clear disabled VE3 latch')
 
     # Boost control tables and rotary split-angle macros are no longer called;
     # retain fuel VE lookup ending in VE_STEP_6 and entire TIMERROLL ISR.
