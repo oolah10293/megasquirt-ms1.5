@@ -103,7 +103,11 @@ class FinalSourceOnly(unittest.TestCase):
         if not INTEGRATED_ASM: self.skipTest('Run with integrated firmware to activate end-to-end tests')
         a=cleaned_source(self.integrated)
         ini=self.integrated_ini
-        for key in ('MS15_IAC_SERVICE:', 'MS15_TICK','ms15_step_low_f','ms15_home_hi_f','ms15_max_hi_f'):
+        # The STEP/DIR routine is intentionally included from a separate
+        # assembly file; it is NOT defined inline in msns-extra.asm.
+        iac=Path(INTEGRATED_ASM).parent/'ms15_iac.inc'
+        self.assertIn('MS15_IAC_SERVICE:',iac.read_text(encoding='latin-1'))
+        for key in ('MS15_TICK','ms15_step_low_f','ms15_home_hi_f','ms15_max_hi_f'):
             self.assertIn(key.lower(),self.integrated.lower(),key)
         for marker in ('include "ms15_iac.inc"','include "ms15_defs.inc"'):
             self.assertIn(marker,a)
