@@ -97,6 +97,6 @@ class FuelOnlyFirmwareSource(unittest.TestCase):
         for line in updated.splitlines():
             clean=line.strip()
             self.assertFalse(re.match(r'^subMenu\s*=\s*(sparkSettings|sparkMap|sparkTbl|codeBase|wheeldecoder|launchSettings|traction)\b',clean,re.I),clean)
-        self.assertIn('MS1/Extra format MS15_001 ******',updated)
+        self.assertIn('MS1/Extra format MS15_002 ******',updated)
 
 if __name__=='__main__':unittest.main()
