@@ -120,6 +120,14 @@ def transform_integrated(source: str) -> str:
     # fail-safe engages the fan. The old water/fan & nitrous/water errors
     # were conflicts between functions we have now physically deleted.
     replace(find('DO_FAN_Check'), find('FAN_OFF'), '''DO_FAN_Check:
+        ; Fan hysteresis is exclusively active for JS2 mode 4.
+        ; Other modes are owned by the programmable-output writer.
+        lda     ms15_out3_mode_f
+        cmp     #4T
+        beq     MS15_FAN_ACTIVE
+        bclr    config_error,feature2
+        jmp     FAN_DONE
+MS15_FAN_ACTIVE:
         lda     EfanOnTemp_f
         cmp     EfanOffTemp_f
         bhi     MS15_FAN_LIMITS_OK
@@ -282,7 +290,7 @@ MS15_VE3_OFF:
     # disabled FIDLE-mode branch. The project's patched source already
     # replaces the PWM actuator with a constant safe level.
     replace(find('inj2done'),find('CHECK_RPM'),
-            'inj2done:\n        bclr    iasc,porta\n\n',
+            'inj2done:\n        ; FIDLE is now owned by MS15_OUTPUT_SERVICE.\n\n',
             'single non-PWM idle actuator (STEP/DIR runs in main loop)')
 
     # Eliminate old spark ownership of front-panel injection LED.
@@ -334,6 +342,47 @@ MS15_VE3_OFF:
     result=result.replace(inc,
         inc+eol+'MS15_PrimeCount  equ TCSparkCut ; priming, not ignition'
         +eol+'MS15_ExtraCrankGate equ NosDcOk ; original extra-cranking-fuel flag')
+    # Use existing, intentionally freed direct-page locations. Explicitly
+    # initialize all persistent output state before the first main-loop pass.
+    init='mov     #$01,MS15_STATE'
+    assert result.count(init)==1
+    result=result.replace(init,init+eol+
+        '        clr     MS15_OUT_CLOCK'+eol+
+        '        clr     MS15_OUT_STATE_A'+eol+
+        '        clr     MS15_OUT_STATE_B')
+    # Minimal once-per-1ms clock work: six pin evaluations run in the main
+    # loop only when the 100ms counter reaches 100, never in injector ISRs.
+    tick='bset     MS15_TICK,MS15_STATE'
+    assert result.count(tick)==1
+    result=result.replace(tick,tick+eol+'        inc     MS15_OUT_CLOCK')
+
+    # Front-panel LEDs are no longer injection, warmup or spark indicators.
+    # Keep branch target labels and physical injector paths intact, replacing
+    # the old LED pin commands with NOP; each bit now has one owner in the
+    # programmable output service.
+    led_line=re.compile(
+        r'(?im)^(?P<prefix>\\s*(?:(?:[A-Za-z_]\\w*):\\s*)?)'
+        r'(?:bset|bclr)\\s+(?:sled|wled|aled|coila|coilb),portc\\b[^\\r\\n]*')
+    result,nled=led_line.subn(
+        lambda m:m.group('prefix')+'nop     ; MS1.5 programmable LED owns this pin',result)
+    assert nled>=3,('no legacy LED pin writers found',nled)
+
+    # New serial-burnable calibration records follow the five existing IAC
+    # bytes in page 9; 6 * 7 = 42 bytes, offsets 118..159 (<189).
+    # Only JS2 (index 3) starts in mode 4 / preserved fan hysteresis.
+    anchor='ms15_max_lo_f:    db    64T'
+    assert result.count(anchor)==1
+    records=['; Six programmable output records, page 9 offsets 118..159.']
+    pins=('led17','led18','led19','js2','js3','fidle')
+    fields=('mode','src_a','on_a','off_a','src_b','on_b','off_b')
+    for n,pin in enumerate(pins):
+        for field in fields:
+            val=4 if n==3 and field=='mode' else 0
+            records.append(f'ms15_out{n}_{field}_f: db    {val}T  ; {pin}')
+    assert len(records)==43
+    result=result.replace(anchor,anchor+eol+eol+eol.join(records))
+    assert 'include "ms15_iac.inc"' in result
+    # Source-only checks run on fully integrated firmware; never assemble.
     return result
 
 
