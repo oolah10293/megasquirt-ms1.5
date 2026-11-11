@@ -22,6 +22,36 @@ OBSOLETE_DIALOGS = {
 }
 OBSOLETE_MENUS = {'rotary trailing &settings'}
 
+OBSOLETE_HELP = {
+    # All these user-help topics describe functionality physically removed
+    # from the fuel-only firmware. Remove their definitions, not just menus.
+    'fhelp4', 'fhelp5', 'shelp1', 'shelp2', 'shelp3', 'shelp4',
+    'shelp5', 'chelp1', 'chelp4', 'chelp5', 'tachohelp',
+    'dwellhelp', 'stim4whelp',
+}
+FUEL_HELP = {
+    'fhelp1': '''help = Fhelp1, "MegaSquirt MS1.5 Fuel-Only"
+       text = "This controller measures ignition/tach pulses for RPM and injects fuel."
+       text = "It does not produce ignition or dwell signals, and has no spark-output selection."
+''',
+    'fhelp2': '''help = Fhelp2, "Fuel Table Selection"
+       text = "Injector channel 1 uses the VE1 map."
+       text = "Injector channel 2 may use VE1 or the independent VE2 map."
+       text = "When VE3 is enabled and the table-select input goes low, VE3 replaces VE1."
+       text = "The configured VE3 switching delay remains active. No nitrous or spark mode is involved."
+''',
+    'fhelp7': '''help = Fhelp7, "Fuel Rev Limiter"
+       text = "The hard RPM threshold cuts both fuel-injection pulse-width commands."
+       text = "The soft RPM threshold starts a countdown before a sustained fuel cut."
+       text = "The soft delay counts in 0.1 second ticks; no ignition timing or spark outputs are controlled."
+''',
+    'chelp2': '''help = Chelp2, "Advanced Fuel Configuration"
+       text = "Hybrid Alpha-N and MAF settings alter fuel-load calculations."
+       text = "Choose settings appropriate to the installed sensors and calibrations."
+       text = "Ignition decoder, spark output, and trigger-latency options are retired."
+''',
+}
+
 
 def transform_integrated(ini: str) -> str:
     eol = '\r\n' if '\r\n' in ini else '\n'
@@ -85,10 +115,28 @@ def transform_integrated(ini: str) -> str:
         output.append(line)
 
     result=''.join(output)
+    # Strip misleading old spark/nitrous/launch help text, including topics
+    # that no longer have visible menus. Replace fuel/VE/rev-limit topics
+    # with descriptions of the actual fuel-only execution paths.
+    def update_help(match):
+        key = match.group(1).lower()
+        if key in OBSOLETE_HELP:
+            return ''
+        if key in FUEL_HELP:
+            return FUEL_HELP[key].replace('\n', eol) + eol
+        return match.group(0)
+    result = re.sub(
+        r'(?ims)^help\s*=\s*([A-Za-z0-9_]+)\s*,.*?(?=^help\s*=|^\[CurveEditor\])',
+        update_help, result)
     assert {'rotarysettings','nossystem','boostcontrol','knock','launchsettings','hardlim'} <= removed_dialogs,removed_dialogs
     assert 'subMenu = idleControl' in result and 'subMenu = ms15FanControl' in result
     assert 'subMenu = RevLimiterS' in result and 'subMenu = veTable1Tbl' in result
     assert 'subMenu = afrTable1Tbl' in result
+    for retired in OBSOLETE_HELP:
+        assert not re.search(r'(?im)^\s*help\s*=\s*'+retired+r'\b', result), retired
+        assert not re.search(r'(?im)^\s*subMenu\s*=\s*'+retired+r'\b', result), retired
+    for help_id in FUEL_HELP:
+        assert re.search(r'(?im)^help\s*=\s*'+help_id+r'\b', result), help_id
     # This is deliberately a strict byte-level calibration section guard.
     def constants(t):
         return t.split('[Constants]',1)[1].split('[Menu]',1)[0]
