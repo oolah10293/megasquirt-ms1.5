@@ -73,42 +73,24 @@ assert len({k for k in occupied if 118<=k<=159})==42
 for idx,name in enumerate(('LED17','LED18','LED19','JS2','JS3','FIDLE')):
     assert re.search(r'(?im)^\s*subMenu\s*=\s*ms15Output'+str(idx)+r'\b',ini),(idx,'menu')
     assert re.search(r'(?im)^\s*dialog\s*=\s*ms15Output'+str(idx)+r'\s*,',ini),(idx,'dialog')
-# Native LED event functions are available only on the three front LEDs.
-mode_defaults=(5,6,7,4,0,0)
-for idx,mode in enumerate(mode_defaults):
-    assert re.search(r'(?mi)^ms15_out'+str(idx)+r'_mode_f:\s*db\s+'+str(mode)+r'T\b',asm),(
-        'unexpected output default',idx,mode)
-    decl=re.search(r'(?mi)^\s*ms15Out'+str(idx)+r'Mode\s*=\s*bits,\s*U08,\s*\d+,\s*\[0:2\],\s*(.*)
-
-assert all(k < 189 for k in occupied)
-labels = ["ms15_step_low_f", "ms15_home_hi_f", "ms15_home_lo_f",
-          "ms15_max_hi_f", "ms15_max_lo_f"]
-for label in labels:
-    assert re.search(r"(?mi)^" + label + r":\s+db\s+", asm), label
-    assert label in iac, f"Firmware stepper service does not use {label}"
-assert "MS15_INIT_DONE" in defs and "MS15_INIT_DONE" in iac
-
-# The original idlefreq byte is not a motor pulse frequency.
-assert re.search(r"(?m)^\s*iacDemandLimit\s*=\s*scalar,\s*U08,\s*011\b", ini)
-assert "Idle Valve Frequency" not in ini.split('dialog = idleControl, "MS1.5 Stepper IAC"')[1].split("dialog =", 1)[0]
-assert 'subMenu = ms15FanControl' in ini and 'dialog = ms15FanControl' in ini
-assert re.search(r"(?m)^\s*subMenu\s*=\s*idleControl\b", ini)
-for unused in ("subMenu = WaterInj,", "subMenu = NosSystem,", "subMenu = boostControl,", "subMenu = outputs,"):
-    assert not any(x.strip().startswith(unused) for x in ini.splitlines()), unused
-
-print("PASS: unique signature, page-9 byte allocation, UI mapping and source symbol alignment")
-print("No TunerStudio GUI test or firmware build was performed.")
-,ini)
-    assert decl,('output mode menu missing',idx)
-    opts=re.findall(r'"([^"]+)"',decl.group(1))
-    if idx < 3:
-        assert len(opts)==8 and opts[4].startswith('Reserved'),(idx,opts)
-        assert opts[5:]==['Squirt (injector activity)','Warmup enrichment',
-                          'Acceleration enrichment'],(idx,opts)
+# Native Squirt/Warmup/Accel modes are available independently on the
+# three front LEDs, while the original JS2 cooling fan remains the default.
+modes=(5,6,7,4,0,0)
+for idx,expected in enumerate(modes):
+    assert f'ms15_out{idx}_mode_f: db    {expected}T' in asm,(idx,expected)
+    name=f'ms15Out{idx}Mode'
+    definitions=[line.strip() for line in ini.splitlines()
+                 if line.strip().startswith(name+' = bits,')]
+    assert len(definitions)==1,(idx,definitions)
+    choices=definitions[0].split('"')[1::2]
+    if idx<3:
+        assert choices[5:8]==['Squirt (injector activity)',
+                              'Warmup enrichment','Acceleration enrichment'],choices
+        assert len(choices)==8 and choices[4].startswith('Reserved'),choices
     elif idx==3:
-        assert len(opts)==5 and opts[4]=='Cooling fan',(idx,opts)
+        assert len(choices)==5 and choices[4]=='Cooling fan',choices
     else:
-        assert len(opts)==4,(idx,opts)
+        assert len(choices)==4,choices
 assert 'include "ms15_outputs.inc"' in iac
 
 assert all(k < 189 for k in occupied)
