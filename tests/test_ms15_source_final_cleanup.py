@@ -104,6 +104,15 @@ class FinalSourceOnly(unittest.TestCase):
             self.assertRegex(a,r'(?i)\b'+token+r'\b')
         self.assertRegex(a,r'(?im)^MS15_PrimeCount\s+equ\s+TCSparkCut\b')
         self.assertNotRegex(a,r'(?im)^\s*(?:lda|sta|inc|clr|dec)\s+TCSparkCut\b')
+        # The source no longer defines any dead dwell/spark helper aliases.
+        for old in ('dwelltmpX','dwelltmpH','dwelltmpL','SparkdltX',
+                    'SparkdltH','SparkdltL'):
+            self.assertNotRegex(a,rf'(?im)^\s*{old}\s+equ\b')
+        # The legacy bit's active use is extra cranking fuel only.
+        self.assertRegex(a,r'(?im)^MS15_ExtraCrankGate\s+equ\s+NosDcOk\b')
+        self.assertNotRegex(a,r'(?im)^\s*(?:brclr|brset|bset|bclr)\s+NosDcOk\b')
+        self.assertRegex(a,r'(?im)^\s*bset\s+MS15_ExtraCrankGate,EnhancedBits\b')
+        self.assertRegex(a,r'(?im)^\s*bclr\s+MS15_ExtraCrankGate,EnhancedBits\b')
         # Retain fixed-zero old telemetry slots without any live ignition code.
         for old in ('SparkAngle','KnockAngle','CltIatAngle'):
             self.assertRegex(a,r'(?im)^\s*sta\s+'+old+r'\b')
