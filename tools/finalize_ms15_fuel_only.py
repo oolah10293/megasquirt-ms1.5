@@ -378,30 +378,40 @@ MS15_VE3_OFF:
         lambda m:m.group('prefix')+'nop     ; MS1.5 programmable LED owns this pin',result)
     assert nled>=3,('no legacy LED pin writers found',nled)
 
-    # Restore injector LED changes at the original start/end ISR edges.
-    # The independent LED mode setting selects which of the three pins
-    # follows the real Squirt event, with no stack calls or new RAM.
+    # Restore native Squirt LED edges in the real injector IRQ path.
+    # Any LED selecting mode 5 follows both injector start/stop edges.
+    # Inline writes avoid extra ISR stack frames and event sampling latency.
     def native_injector_edge(activate: bool, event: str) -> str:
-        rows=['        ; Native Squirt LED edge: fast mode 5']
+        lines=['        ; MS15 injector-event LED fanout']
         for idx,pin in enumerate(('sled','wled','aled')):
             skip=f'ILE_{event}_{idx}'
-            rows.extend((
+            lines.extend((
                 f'        lda     ms15_out{idx}_mode_f',
                 '        cmp     #5T',
                 f'        bne     {skip}',
                 f'        {"bset" if activate else "bclr"}    {pin},portc',
                 skip+':',
             ))
-        return eol.join(rows)
+        return eol.join(lines)
 
-    for label,event,activate,context in (
+    for label,event,activate,check in (
         ('nsq1:','ON1',True,'clr pwrun1'),
         ('nsq2:','ON2',True,'clr pwrun2'),
         ('CHK_RE_ENABLE:','OFF',False,'brset firing2,squirt'),
     ):
-        matches=list(re.finditer(r'(?m)^'+re.escape(label)+r'\s*    # New serial-burnable calibration records follow the five existing IAC
+        assert result.count(eol+label)==1,(label,'injection label missing')
+        at=result.index(eol+label)
+        prior=result[max(0,at-320):at]
+        assert ''.join(check.split()) in ''.join(prior.split()),(label,prior)
+        nop='nop     ; MS1.5 programmable LED owns this pin'
+        pos=result.rfind(nop,0,at)
+        assert at-200<=pos<at,(label,'injector LED site missing')
+        result=result[:pos]+native_injector_edge(activate,event)+result[pos+len(nop):]
+    assert result.count('MS15 injector-event LED fanout')==3
+
+    # New serial-burnable calibration records follow the five existing IAC
     # bytes in page 9; 6 * 7 = 42 bytes, offsets 118..159 (<189).
-    # Defaults: LED17=Squirt (5), LED18=Warmup (6), LED19=Accel (7), JS2=fan (4).
+    # Default: LEDs = Squirt/Warmup/Accel (5/6/7); JS2 fan (4).
     anchor='ms15_max_lo_f:    db    64T'
     assert result.count(anchor)==1
     records=['; Six programmable output records, page 9 offsets 118..159.']
@@ -410,50 +420,6 @@ MS15_VE3_OFF:
     for n,pin in enumerate(pins):
         for field in fields:
             val=(5,6,7,4,0,0)[n] if field=='mode' else 0
-            records.append(f'ms15_out{n}_{field}_f: db    {val}T  ; {pin}')
-    assert len(records)==43
-    result=result.replace(anchor,anchor+eol+eol+eol.join(records))
-    assert 'include "ms15_iac.inc"' in result
-    # Source-only checks run on fully integrated firmware; never assemble.
-    return result
-
-
-def transform(original: str) -> str:
-    return transform_integrated(initial_fuel_only(original))
-
-
-def main() -> None:
-    if len(sys.argv)!=2:
-        raise SystemExit('Usage: finalize_ms15_fuel_only.py /path/to/fully-patched/msns-extra.asm')
-    path=Path(sys.argv[1])
-    raw=path.read_bytes()
-    result=transform_integrated(raw.decode('latin-1'))
-    path.write_bytes(result.encode('latin-1'))
-    print('SOURCE ONLY: post-ignition removal cleanup complete; UNBUILT')
-
-if __name__=='__main__': main(),result))
-        assert len(matches)==1,(label,'injector event label missing')
-        at=matches[0].start()
-        prior=result[max(0,at-320):at]
-        assert re.sub(r'\s+','',context) in re.sub(r'\s+','',prior),(label,prior)
-        nop='nop     ; MS1.5 programmable LED owns this pin'
-        pos=result.rfind(nop,0,at)
-        assert pos>=at-200,(label,'original injector LED NOP missing')
-        replacement=native_injector_edge(activate,event)
-        result=result[:pos]+replacement+result[pos+len(nop):]
-    assert result.count('Native Squirt LED edge')==3
-
-    # New serial-burnable calibration records follow the five existing IAC
-    # bytes in page 9; 6 * 7 = 42 bytes, offsets 118..159 (<189).
-    # Only JS2 (index 3) starts in mode 4 / preserved fan hysteresis.
-    anchor='ms15_max_lo_f:    db    64T'
-    assert result.count(anchor)==1
-    records=['; Six programmable output records, page 9 offsets 118..159.']
-    pins=('led17','led18','led19','js2','js3','fidle')
-    fields=('mode','src_a','on_a','off_a','src_b','on_b','off_b')
-    for n,pin in enumerate(pins):
-        for field in fields:
-            val=4 if n==3 and field=='mode' else 0
             records.append(f'ms15_out{n}_{field}_f: db    {val}T  ; {pin}')
     assert len(records)==43
     result=result.replace(anchor,anchor+eol+eol+eol.join(records))
