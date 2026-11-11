@@ -79,7 +79,7 @@ def transform_integrated(ini: str) -> str:
             m = re.match(r'^subMenu\s*=\s*([A-Za-z_]\w*)',stripped,re.I)
             if m:
                 name=m.group(1).lower()
-                if name in OBSOLETE_DIALOGS or prior_menu in OBSOLETE_MENUS:
+                if name in OBSOLETE_DIALOGS or name in OBSOLETE_HELP or prior_menu in OBSOLETE_MENUS:
                     removed_menu_entries.add(name)
                     output.append('; MS1.5 removed obsolete submenu: '+line.lstrip())
                     continue
