@@ -7,6 +7,10 @@
 ; Each has a 7-byte page-9 record:
 ; MODE, SRC_A, ON_A, OFF_A, SRC_B, ON_B, OFF_B.
 ; MODE 0=disabled, 1=A, 2=A AND B, 3=A OR B, 4=fan (JS2 only).
+; LED modes 5=real injector activity, 6=warmup, 7=accel enrichment.
+; Only LED17/18/19 accept modes 5..7. Injector edges update all LEDs
+; selected for mode 5 in the real injector ISR, not only at 100 ms.
+; Periodic evaluation reconciles the level after changing a mode.
 ; Sources 0=none, 1/2=RPM above/below (100 rpm units),
 ; 3/4=CLT above/below (degrees F +40), 5/6=TPS above/below (ADC),
 ; 7/8=MAP above/below (kPa), 9/10=battery above/below (raw ADC),
@@ -49,8 +53,45 @@ MS15_OUT_BAD_FAN:
 MS15_OUT_MODE_NORMAL:
         lda     MS15_OUT_MODE
         cmp     #4T
-        blo     MS15_OUT_START_A
+        bhs     M15_EVT_CHECK
+        jmp     MS15_OUT_START_A
+M15_EVT_CHECK:
+        cmp     #8T
+        blo     M15_EVT_INDEX
         jmp     MS15_OUT_DISABLED
+M15_EVT_INDEX:
+        lda     MS15_OUT_INDEX
+        cmp     #3T
+        blo     M15_EVT_SELECT
+        jmp     MS15_OUT_DISABLED
+M15_EVT_SELECT:
+        lda     MS15_OUT_MODE
+        cmp     #5T
+        beq     M15_EVT_SQUIRT
+        cmp     #6T
+        beq     M15_EVT_WARM
+        jmp     M15_EVT_ACCEL
+
+; Reconcile legacy indicators after a mode edit, while keeping fast
+; injector ON/OFF edges handled at their original ISR points. The periodic
+; service is not relied upon to observe short injection events.
+M15_EVT_SQUIRT:
+        clr     MS15_OUT_RESULT
+        brset   firing1,squirt,M15_EVT_ACTIVE
+        brset   firing2,squirt,M15_EVT_ACTIVE
+        jmp     MS15_OUT_WRITE
+M15_EVT_WARM:
+        clr     MS15_OUT_RESULT
+        brset   warmup,engine,M15_EVT_ACTIVE
+        jmp     MS15_OUT_WRITE
+M15_EVT_ACCEL:
+        clr     MS15_OUT_RESULT
+        brset   TPSAEN,engine,M15_EVT_ACTIVE
+        jmp     MS15_OUT_WRITE
+M15_EVT_ACTIVE:
+        lda     MS15_OUT_MASK
+        sta     MS15_OUT_RESULT
+        jmp     MS15_OUT_WRITE
 
 MS15_OUT_START_A:
         lda     MS15_OUT_STATE_A

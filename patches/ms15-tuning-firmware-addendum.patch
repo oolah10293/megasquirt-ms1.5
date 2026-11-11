@@ -7,7 +7,7 @@
 -textversion_f:   db   'MS1/Extra rev 029y4 ************' ; full code release
 -Signature:       db   'MS1/Extra format 029y3 *********' ; data format for
 +textversion_f:   db   'MS1.5 TEST rev 0.1 *************' ; new 32-byte MS1.5 test identity
-+Signature:       db   'MS1/Extra format MS15_002 ******' ; unique 32-byte MS1.5 INI format
++Signature:       db   'MS1/Extra format MS15_003 ******' ; unique 32-byte MS1.5 INI format
                   ; ini file matching, ONLY change this if the data format changed.
  ;must be 32 chars     '12345678901234567890123456789012' ; (may change to 20)
  rpmdotrate:

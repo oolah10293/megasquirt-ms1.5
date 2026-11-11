@@ -189,6 +189,37 @@ class FinalSourceOnly(unittest.TestCase):
         for native in ('Not Connected','Data Logging','Protocol Error'):
             self.assertNotIn('"'+native+'"',front)
 
+    def test_native_led_events_and_startup_defaults(self):
+        if not INTEGRATED_ASM:
+            self.skipTest('Requires complete MS1.5 output integration')
+        a=cleaned_source(self.integrated)
+        configs=(5,6,7,4,0,0)
+        for idx,mode in enumerate(configs):
+            self.assertRegex(a,r'(?im)^ms15_out'+str(idx)+r'_mode_f:\s*db\s+'+str(mode)+r'T')
+        for start,stop,event,instruction in (
+            ('NEW_SQUIRT1:','nsq1:','ON1','bset'),
+            ('NEW_SQUIRT2:','nsq2:','ON2','bset'),
+            ('CHECK_RPM:','CHK_RE_ENABLE:','OFF','bclr'),
+        ):
+            block=a.split(start,1)[1].split(stop,1)[0]
+            self.assertIn('firing2,squirt' if event=='OFF' else 'inj',block)
+            for idx,pin in enumerate(('sled','wled','aled')):
+                self.assertRegex(block,
+                    r'(?is)lda\s+ms15_out'+str(idx)+r'_mode_f\s+'
+                    r'cmp\s+#5T\s+bne\s+ILE_'+event+'_'+str(idx)+r'\s+'
+                    +instruction+r'\s+'+pin+r',portc\s+ILE_'+event+'_'+str(idx)+r':')
+        for pin in ('sled','wled','aled'):
+            self.assertEqual(len(re.findall(r'(?im)^\s*bset\s+'+pin+r',portc\b',a)),2)
+            self.assertEqual(len(re.findall(r'(?im)^\s*bclr\s+'+pin+r',portc\b',a)),1)
+        choices=self.integrated_ini
+        for idx in range(3):
+            self.assertIn('"Squirt (injector activity)"',choices)
+            self.assertIn('"Warmup enrichment"',choices)
+            self.assertIn('"Acceleration enrichment"',choices)
+        module=(Path(INTEGRATED_ASM).parent/'ms15_outputs.inc').read_text()
+        for flag in ('firing1,squirt','firing2,squirt','warmup,engine','TPSAEN,engine'):
+            self.assertIn(flag,module)
+
     def test_all_remaining_legacy_runtime_identifiers_are_accounted_for(self):
         # Audit the *entire integrated* assembly, not a handful of snippets.
         # Historical flash DB/equ fields are deliberately kept in-place for
@@ -249,7 +280,7 @@ class FinalSourceOnly(unittest.TestCase):
         self.assertRegex(a,r'(?im)^\s*bset\s+config_error,feature2\b')
         for marker in ('subMenu = idleControl','subMenu = ms15FanControl','subMenu = veTable1Tbl','subMenu = veTable2Tbl','subMenu = afrTable1Tbl','subMenu = afrTable2Tbl','subMenu = RevLimiterS'):
             self.assertIn(marker,ini,marker)
-        self.assertIn('MS1/Extra format MS15_002 ******',ini)
+        self.assertIn('MS1/Extra format MS15_003 ******',ini)
         for forbidden in ('dialog = sparkSettings,','dialog = knock,','dialog = NosSystem,','dialog = launchSettings,','dialog = boostControl,'):
             self.assertNotIn(forbidden,ini)
         self.assertIn('Table-select input low',ini)

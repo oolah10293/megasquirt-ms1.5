@@ -188,6 +188,8 @@ def transform_integrated(ini: str) -> str:
         'Battery above', 'Battery below',
         'Engine running', 'Engine cranking',
     ]
+    # Mode slots 5..7 are native original MegaSquirt LED functions on
+    # every LED; slot 4 remains fan-only on JS2 (reserved on LEDs).
     modes=['Disabled','Condition A','A AND B','A OR B']
     cfg_definitions=[]
     output_dialogs=[]
@@ -198,7 +200,9 @@ def transform_integrated(ini: str) -> str:
             ('OffB','off_b'))
     for index,name in enumerate(names):
         offset=118+index*7
-        mode_opts=modes+(['Cooling fan'] if index==3 else [])
+        mode_opts=(modes+['Reserved (fan only)', 'Squirt (injector activity)',
+                          'Warmup enrichment', 'Acceleration enrichment']
+                   if index<3 else modes+(['Cooling fan'] if index==3 else []))
         mopts=', '.join('"'+x+'"' for x in mode_opts)
         sopts=', '.join('"'+x+'"' for x in src_options)
         for j,(ui,sym) in enumerate(fields):

@@ -16,7 +16,7 @@ asm = (root / "src" / "msns-extra.asm").read_text(errors="replace")
 iac = (root / "src" / "ms15_iac.inc").read_text(errors="replace")
 defs = (root / "src" / "ms15_defs.inc").read_text(errors="replace")
 
-signature = "MS1/Extra format MS15_002 ******"
+signature = "MS1/Extra format MS15_003 ******"
 assert len(signature.encode('ascii')) == 32
 assert signature.startswith('MS1/Extra format ')
 assert signature != 'MS1/Extra format 029y3 *********'
@@ -73,6 +73,24 @@ assert len({k for k in occupied if 118<=k<=159})==42
 for idx,name in enumerate(('LED17','LED18','LED19','JS2','JS3','FIDLE')):
     assert re.search(r'(?im)^\s*subMenu\s*=\s*ms15Output'+str(idx)+r'\b',ini),(idx,'menu')
     assert re.search(r'(?im)^\s*dialog\s*=\s*ms15Output'+str(idx)+r'\s*,',ini),(idx,'dialog')
+# Native Squirt/Warmup/Accel modes are available independently on the
+# three front LEDs, while the original JS2 cooling fan remains the default.
+modes=(5,6,7,4,0,0)
+for idx,expected in enumerate(modes):
+    assert f'ms15_out{idx}_mode_f: db    {expected}T' in asm,(idx,expected)
+    name=f'ms15Out{idx}Mode'
+    definitions=[line.strip() for line in ini.splitlines()
+                 if line.strip().startswith(name+' = bits,')]
+    assert len(definitions)==1,(idx,definitions)
+    choices=definitions[0].split('"')[1::2]
+    if idx<3:
+        assert choices[5:8]==['Squirt (injector activity)',
+                              'Warmup enrichment','Acceleration enrichment'],choices
+        assert len(choices)==8 and choices[4].startswith('Reserved'),choices
+    elif idx==3:
+        assert len(choices)==5 and choices[4]=='Cooling fan',choices
+    else:
+        assert len(choices)==4,choices
 assert 'include "ms15_outputs.inc"' in iac
 
 assert all(k < 189 for k in occupied)

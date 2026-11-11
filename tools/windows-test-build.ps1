@@ -1,4 +1,4 @@
-# Authorized CASM08Z assembly of MS1.5 six-output source with matching MS15_002 INI.
+# Authorized CASM08Z assembly of MS1.5 original LED modes with matching MS15_003 INI.
 # Runs only on disposable Windows GitHub Actions runner.
 # IMPORTANT: test image is NOT safe to flash or deploy to an engine.
 $ErrorActionPreference = 'Stop'
@@ -95,8 +95,8 @@ try {
   if ($LASTEXITCODE -ne 0) { throw "TunerStudio INI patch failed with exit code $LASTEXITCODE" }
 } finally { Pop-Location }
 
-# Fuel-only source transform and menu cleanup. Owner explicitly authorized
-# a test assembly on 2026-11-10; this job NEVER flashes hardware.
+# Fuel-only source transform and menu cleanup. Owner separately authorized
+# MS15_003 assembly on 2026-11-11; this job NEVER flashes hardware.
 # Keep the *actual fully patched* preclean assembly/INI in the source tree
 # for the integrated regression test; no assembler has been called for this
 # modified source yet. The original baseline above is unchanged.
@@ -132,8 +132,8 @@ python (Join-Path $repo 'tools\check_ms15_tuning.py') $tree
 if ($LASTEXITCODE -ne 0) { throw "Tuning/source consistency checker failed: $LASTEXITCODE" }
 
 # This is the matching INI source for the newly assembled firmware, NOT a release.
-Copy-Item (Join-Path $tree 'msns-extra.ini') (Join-Path $results 'MS15-PROGRAMMABLE-OUTPUTS-UNVALIDATED.ini') -Force
-Invoke-OriginalAssembler 'MS15-PROGRAMMABLE-OUTPUTS-UNVALIDATED'
+Copy-Item (Join-Path $tree 'msns-extra.ini') (Join-Path $results 'MS15_003.ini') -Force
+Invoke-OriginalAssembler 'MS15_003'
 
 # Compare map regions and ensure bootloader/calibration image remained unchanged.
 @'
@@ -157,10 +157,10 @@ def parse(path):
     return memory
 
 before = parse(root / "baseline.s19")
-after = parse(root / "MS15-PROGRAMMABLE-OUTPUTS-UNVALIDATED.s19")
+after = parse(root / "MS15_003.s19")
 shipped = parse(sys.argv[1])
 assert before == shipped, "Assembled original differs from shipped 029y4a image"
-for name in ("baseline","MS15-PROGRAMMABLE-OUTPUTS-UNVALIDATED"):
+for name in ("baseline","MS15_003"):
     err = (root / (name+".err")).read_text(errors="replace")
     assert "Successful assembly - No errors." in err, f"{name} assembler reported errors: {err}"
 
@@ -178,7 +178,7 @@ assert before != after, "No MS1.5 code changes produced"
 new_cal = set(range(0xE871, 0xE8A0))
 expected_defaults = [4, 1, 104, 1, 64]
 for n in range(6):
-    expected_defaults += [4 if n==3 else 0] + [0]*6
+    expected_defaults += [(5,6,7,4,0,0)[n]] + [0]*6
 assert len(expected_defaults)==47, expected_defaults
 assert [after.get(k) for k in sorted(new_cal)] == expected_defaults, "Wrong IAC/output calibration defaults"
 assert all(before.get(k) is None for k in new_cal), "Original source occupied planned new calibration addresses"
@@ -199,7 +199,19 @@ assert 0xFACA + 18*3 == 0xFB00
 high_changes = [k for k in before.keys()|after.keys() if k>=0xE000 and before.get(k)!=after.get(k)]
 assert set(high_changes).issubset(allowed|new_cal), f"Unexpected high-memory differences: {high_changes}"
 assert set(high_changes)&new_cal == new_cal, "Not all 47 page-9 calibration bytes were added"
-signature = b"MS1/Extra format MS15_002 ******"
+# Assert that TunerStudio's native LED selections correspond to the
+# compiled defaults rather than only checking a matching signature.
+ini_text = (root / "MS15_003.ini").read_text(encoding='latin-1')
+assert 'signature    = "MS1/Extra format MS15_003 ******"' in ini_text, "INI has wrong serial signature"
+for idx in range(3):
+    name = f'ms15Out{idx}Mode'
+    matches=[line for line in ini_text.splitlines() if line.strip().startswith(name+' = bits,')]
+    assert len(matches)==1,(name,matches)
+    for choice in ('Squirt (injector activity)','Warmup enrichment','Acceleration enrichment'):
+        assert f'"{choice}"' in matches[0],(name,choice)
+for idx,choice in enumerate((5,6,7)):
+    assert after.get(0xE876+idx*7)==choice,(idx,after.get(0xE876+idx*7),choice)
+signature = b"MS1/Extra format MS15_003 ******"
 version = b"MS1.5 TEST rev 0.1 *************"
 assert len(signature)==32 and len(version)==32
 main_blob = bytes(after.get(k,0) for k in range(0x8128, 0xE000))
@@ -209,8 +221,8 @@ report = [
     "PASS: CASM08Z assembled both images without errors",
     "PASS: Baseline is byte-for-byte identical to shipped 029y4a S19",
     "PASS: Original calibration tables and bootloader unchanged except exactly 47 new page-9 bytes",
-    "PASS: New tuning fields at E871-E89F: IAC 5 bytes + six 7-byte output records, JS2 fan default",
-    "PASS: Firmware contains matching MS15_002 signature and 32-byte text version",
+    "PASS: New tuning fields at E871-E89F: five IAC bytes + six 7-byte outputs; LED17/18/19 native Squirt/WUE/Accel defaults and JS2 fan", 
+    "PASS: Firmware contains matching MS15_003 signature and 32-byte text version",
     f"PASS: {relocations} interrupt vectors correctly relocated ({len(high_changes)} address-byte changes)",
     f"Main-code end: baseline 0x{max(main_before):04X}; MS1.5 0x{last:04X}",
     f"Net occupied program growth: {len(main_after)-len(main_before)} bytes",
@@ -221,7 +233,7 @@ report = [
 print("\n".join(report))
 (root/"REPORT.txt").write_text("\n".join(report)+"\n")
 from hashlib import sha256
-for file in ('MS15-PROGRAMMABLE-OUTPUTS-UNVALIDATED.s19','MS15-PROGRAMMABLE-OUTPUTS-UNVALIDATED.ini'):
+for file in ('MS15_003.s19','MS15_003.ini'):
     path = root / file
     assert path.is_file(), f'Missing paired build result {path}'
     digest=sha256(path.read_bytes()).hexdigest()
@@ -233,4 +245,4 @@ try {
   python .\check_built_image.py (Join-Path $tree 'msns-extra.s19')
   if ($LASTEXITCODE -ne 0) { throw "Image-space verification failed: $LASTEXITCODE" }
 } finally { Pop-Location }
-Write-Host 'Completed test assembly. DO NOT FLASH image before actual validation.'
+Write-Host 'Completed MS15_003 assembly and INI generation. No hardware was flashed.'
