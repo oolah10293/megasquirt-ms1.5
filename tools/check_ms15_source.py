@@ -179,11 +179,36 @@ for bit,port in (('sled','portc'),('wled','portc'),('aled','portc'),
     assert sorted(op.lower() for op,b,p in pin_writes
                   if b.lower()==bit and p.lower()==port)==['bclr','bset'],bit
 assert len(pin_writes)==12,('Unexpected extra output writer',pin_writes)
-assert not re.search(r'(?im)^\s*(bset|bclr)\s+(sled|wled|aled|coila|coilb),portc\b',active),(
-    'The original LED routines still override programmable output pins')
+# Three designated injector ISR edges drive only LEDs selecting native
+# Squirt mode 5. Other original LED writers remain physically removed.
+native_pin_writes=re.findall(
+    r'(?im)^\s*(bset|bclr)\s+(sled|wled|aled|coila|coilb),portc\b',active)
+for pin in ('sled','wled','aled'):
+    assert sum(1 for op,p in native_pin_writes if p.lower()==pin and op.lower()=='bset')==2,pin
+    assert sum(1 for op,p in native_pin_writes if p.lower()==pin and op.lower()=='bclr')==1,pin
+assert len(native_pin_writes)==9,('unexpected LED writer outside injector IRQ',native_pin_writes)
+for label,event,on in (('nsq1','ON1',True),('nsq2','ON2',True),
+                       ('CHK_RE_ENABLE','OFF',False)):
+    assert active.count('ILE_'+event+'_0:')==1
+    for idx,pin in enumerate(('sled','wled','aled')):
+        stmt='bset' if on else 'bclr'
+        snippet=re.compile(
+            r'(?im)^\s*lda\s+ms15_out'+str(idx)+r'_mode_f\s*'
+            r'cmp\s+#5T\s*bne\s+ILE_'+event+'_'+str(idx)+r'\s*'
+            r''+stmt+r'\s+'+pin+r',portc\s*ILE_'+event+'_'+str(idx)+r':')
+        assert snippet.search(active),('injector LED writer has no mode guard',event,pin)
+
 assert not re.search(r'(?im)^\s*bclr\s+iasc,porta\b',active),(
     'Legacy PWM idle FIDLE writer was not removed')
 assert 'ms15_out3_mode_f' in active and 'DO_FAN_Check:' in active
+# Native original MegaSquirt LED modes are in addition to sensor logic.
+for name in ('M15_EVT_SQUIRT:', 'M15_EVT_WARM:', 'M15_EVT_ACCEL:'):
+    assert name in outputs,name
+assert 'brset   firing1,squirt,M15_EVT_ACTIVE' in outputs
+assert 'brset   firing2,squirt,M15_EVT_ACTIVE' in outputs
+assert 'brset   warmup,engine,M15_EVT_ACTIVE' in outputs
+assert 'brset   TPSAEN,engine,M15_EVT_ACTIVE' in outputs
+
 
 print("PASS: source-only pin writers, stepper/output RAM aliases and estimated branch spans")
 print("Output aliases:", {k:hex(addresses[v]) for k,v in output_aliases.items()})
