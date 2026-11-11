@@ -66,13 +66,13 @@ for idx in range(6):
         expected=f'ms15Out{idx}{field}'
         assert occupied.get(pos)==expected,(pos,occupied.get(pos),expected)
         rom_field=('mode','src_a','on_a','off_a','src_b','on_b','off_b')[ofs]
-        assert re.search(r'(?mi)^ms15_out'+str(idx)+'_'+rom_field+r'_f:\\s*db\\s+\\d+T',asm),(
+        assert re.search(r'(?mi)^ms15_out'+str(idx)+'_'+rom_field+r'_f:\s*db\s+\d+T',asm),(
             idx,rom_field)
 assert max(occupied)==159
 assert len({k for k in occupied if 118<=k<=159})==42
 for idx,name in enumerate(('LED17','LED18','LED19','JS2','JS3','FIDLE')):
-    assert re.search(r'(?im)^\\s*subMenu\\s*=\\s*ms15Output'+str(idx)+r'\\b',ini),(idx,'menu')
-    assert re.search(r'(?im)^\\s*dialog\\s*=\\s*ms15Output'+str(idx)+r'\\s*,',ini),(idx,'dialog')
+    assert re.search(r'(?im)^\s*subMenu\s*=\s*ms15Output'+str(idx)+r'\b',ini),(idx,'menu')
+    assert re.search(r'(?im)^\s*dialog\s*=\s*ms15Output'+str(idx)+r'\s*,',ini),(idx,'dialog')
 assert 'include "ms15_outputs.inc"' in iac
 
 assert all(k < 189 for k in occupied)
