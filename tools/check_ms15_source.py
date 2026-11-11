@@ -136,6 +136,7 @@ for at, mnemonic, arg in instructions:
         delta = labels[label] - (at + sizes[mnemonic])
         assert -128 <= delta <= 127, (mnemonic, label, delta)
 
+iac_estimated_bytes=offset
 # Additional conservative static check of the entire new output evaluator.
 # This is an instruction-form and *approximate* branch-distance screen, NOT
 # assembler validation. Direct-port owners must be exclusive by construction.
@@ -186,6 +187,7 @@ assert 'ms15_out3_mode_f' in active and 'DO_FAN_Check:' in active
 
 print("PASS: source-only pin writers, stepper/output RAM aliases and estimated branch spans")
 print("Output aliases:", {k:hex(addresses[v]) for k,v in output_aliases.items()})
-print("ROM screen:", len(instructions), "IAC instructions;", offset, "estimated bytes (NOT assembled)")
+print("ROM screen:", len(instructions), "IAC instructions;", iac_estimated_bytes, "estimated bytes (NOT assembled)")
+print("Output ROM screen:",len(out_instructions),"instructions;",offset,"estimated bytes (NOT assembled)")
 print("State locations:", {name:hex(addresses[old]) for name,old in aliases.items()})
 print("NOT TESTED: assembly, map/ROM limits, stack, motor behavior, injector jitter, safety.")
