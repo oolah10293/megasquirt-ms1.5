@@ -24,6 +24,7 @@ MS15_OUTPUT_SERVICE:
         bhs     MS15_OUTPUT_DUE
         jmp     MS15_IAC_CONTINUE
 MS15_OUTPUT_DUE:
+        clrh    ; indexed page-9 table accesses require HX high byte = 0
         clr     MS15_OUT_CLOCK
         clr     MS15_OUT_OFS
         clr     MS15_OUT_INDEX
