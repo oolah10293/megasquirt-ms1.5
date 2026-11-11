@@ -86,6 +86,25 @@ class FinalSourceOnly(unittest.TestCase):
         # Expected original-only FAN writers remain in *unpatched* upstream.
         # The complete integrated assembly is tested independently below.
 
+    def test_no_remaining_nitrous_spark_delay_or_unsafe_output3(self):
+        a=cleaned_source(self.cleaned)
+        for forbidden in (r'^\s*add\s+NosPW\b',
+                          r'^\s*brset\s+out3sparkd,',
+                          r'^\s*bclr\s+Output3,portd',
+                          r'^\s*inc\s+Out3Timer\b',
+                          r'^\s*lda\s+Spark2Delay_f\b',
+                          r'^\s*sta\s+ST2Timer\b',
+                          r'^\s*sthx\s+dwelldelay[1-6]\b',
+                          r'^\s*sta\s+(?:NosPW|NitrousAngle|KnockAngle)\b'):
+            self.assertNotRegex(a,r'(?im)'+forbidden,forbidden)
+        # VE3 is a FUEL-table switch, not a spark-table switch. Its delay
+        # is still used by VE3_Table and deliberately retained.
+        for token in ('VE3Timer','VE3Delay_f','Check_VE3_Table','NosDcOk',
+                      'MS15_PrimeCount'):
+            self.assertRegex(a,r'(?i)\b'+token+r'\b')
+        self.assertRegex(a,r'(?im)^MS15_PrimeCount\s+equ\s+TCSparkCut\b')
+        self.assertNotRegex(a,r'(?im)^\s*(?:lda|sta|inc|clr|dec)\s+TCSparkCut\b')
+
     def test_no_dangling_original_labels(self):
         prior=symbols(self.full)
         deleted=prior-symbols(self.cleaned)
@@ -123,5 +142,11 @@ class FinalSourceOnly(unittest.TestCase):
         for forbidden in ('dialog = sparkSettings,','dialog = knock,','dialog = NosSystem,','dialog = launchSettings,','dialog = boostControl,'):
             self.assertNotIn(forbidden,ini)
         self.assertIn('Table-select input low',ini)
+        pre=Path(INTEGRATED_ASM).read_bytes().decode('latin-1')
+        deleted=symbols(pre)-symbols(self.integrated)
+        for n,line in enumerate(cleaned_source(self.integrated).splitlines(),1):
+            if not line:continue
+            words={word.lower() for word in re.findall(r'\b[A-Za-z_]\w*\b',line)}
+            self.assertFalse((words&deleted)-{'stx'},(n,line,words&deleted))
 
 if __name__=='__main__':unittest.main()
