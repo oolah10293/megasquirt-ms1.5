@@ -196,21 +196,20 @@ class FinalSourceOnly(unittest.TestCase):
         configs=(5,6,7,4,0,0)
         for idx,mode in enumerate(configs):
             self.assertRegex(a,r'(?im)^ms15_out'+str(idx)+r'_mode_f:\s*db\s+'+str(mode)+r'T')
-        for start,stop,event,instruction in (
-            ('NEW_SQUIRT1:','nsq1:','ON1','bset'),
-            ('NEW_SQUIRT2:','nsq2:','ON2','bset'),
-            ('CHECK_RPM:','CHK_RE_ENABLE:','OFF','bclr'),
+        # Out-of-line IRQ handlers avoid HC08 relative-branch overflows and
+        # return by absolute JMP, not stack calls. Real injector event timing
+        # is still observed directly by each selected LED.
+        for start,stop,event in (
+            ('NEW_SQUIRT1:','nsq1:','ON1'),
+            ('NEW_SQUIRT2:','nsq2:','ON2'),
+            ('CHECK_RPM:','CHK_RE_ENABLE:','OFF'),
         ):
             block=a.split(start,1)[1].split(stop,1)[0]
-            self.assertIn('firing2,squirt' if event=='OFF' else 'inj',block)
-            for idx,pin in enumerate(('sled','wled','aled')):
-                self.assertRegex(block,
-                    r'(?is)lda\s+ms15_out'+str(idx)+r'_mode_f\s+'
-                    r'cmp\s+#5T\s+bne\s+ILE_'+event+'_'+str(idx)+r'\s+'
-                    +instruction+r'\s+'+pin+r',portc\s+ILE_'+event+'_'+str(idx)+r':')
+            self.assertRegex(block,r'(?is)jmp\s+MS15_IL_'+event+
+                             r'\s+ILE_RET_'+event+r':')
         for pin in ('sled','wled','aled'):
-            self.assertEqual(len(re.findall(r'(?im)^\s*bset\s+'+pin+r',portc\b',a)),2)
-            self.assertEqual(len(re.findall(r'(?im)^\s*bclr\s+'+pin+r',portc\b',a)),1)
+            self.assertNotRegex(a,r'(?im)^\s*bset\s+'+pin+r',portc\b')
+            self.assertNotRegex(a,r'(?im)^\s*bclr\s+'+pin+r',portc\b')
         choices=self.integrated_ini
         for idx in range(3):
             self.assertIn('"Squirt (injector activity)"',choices)
@@ -219,6 +218,20 @@ class FinalSourceOnly(unittest.TestCase):
         module=(Path(INTEGRATED_ASM).parent/'ms15_outputs.inc').read_text()
         for flag in ('firing1,squirt','firing2,squirt','warmup,engine','TPSAEN,engine'):
             self.assertIn(flag,module)
+        for event,on in (('ON1',True),('ON2',True),('OFF',False)):
+            block=module.split('MS15_IL_'+event+':',1)[1].split(
+                'jmp     ILE_RET_'+event,1)[0]
+            self.assertRegex(block,r'(?is)psha\s+tpa\s+psha')
+            self.assertRegex(block,r'(?is)pula\s+tap\s+pula')
+            for idx,pin in enumerate(('sled','wled','aled')):
+                instruction='bset' if on else 'bclr'
+                self.assertRegex(block,
+                    r'(?is)lda\s+ms15_out'+str(idx)+r'_mode_f\s+'
+                    r'cmp\s+#5T\s+bne\s+IL_'+event+'_'+str(idx)+r'\s+'
+                    +instruction+r'\s+'+pin+r',portc\s+IL_'+event+'_'+str(idx)+r':')
+        for pin in ('sled','wled','aled'):
+            self.assertEqual(len(re.findall(r'(?im)^\s*bset\s+'+pin+r',portc\b',module)),2)
+            self.assertEqual(len(re.findall(r'(?im)^\s*bclr\s+'+pin+r',portc\b',module)),1)
 
     def test_all_remaining_legacy_runtime_identifiers_are_accounted_for(self):
         # Audit the *entire integrated* assembly, not a handful of snippets.
