@@ -361,8 +361,8 @@ MS15_VE3_OFF:
     # the old LED pin commands with NOP; each bit now has one owner in the
     # programmable output service.
     led_line=re.compile(
-        r'(?im)^(?P<prefix>\\s*(?:(?:[A-Za-z_]\\w*):\\s*)?)'
-        r'(?:bset|bclr)\\s+(?:sled|wled|aled|coila|coilb),portc\\b[^\\r\\n]*')
+        r'(?im)^(?P<prefix>\s*(?:(?:[A-Za-z_]\w*):\s*)?)'
+        r'(?:bset|bclr)\s+(?:sled|wled|aled|coila|coilb),portc\b[^\r\n]*')
     result,nled=led_line.subn(
         lambda m:m.group('prefix')+'nop     ; MS1.5 programmable LED owns this pin',result)
     assert nled>=3,('no legacy LED pin writers found',nled)
