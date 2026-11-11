@@ -139,7 +139,7 @@ for at, mnemonic, arg in instructions:
 # Additional conservative static check of the entire new output evaluator.
 # This is an instruction-form and *approximate* branch-distance screen, NOT
 # assembler validation. Direct-port owners must be exclusive by construction.
-out_ops=dict.fromkeys(('lda','ldx','sta','cmp','bit','and','ora','clr','inc','mov'),3)
+out_ops=dict.fromkeys(('lda','ldx','sta','cmp','bit','and','ora','add','clr','inc','mov'),3)
 out_ops.update(dict.fromkeys(('bset','bclr'),2))
 out_ops.update(dict.fromkeys(('brset','brclr','jmp'),3))
 out_ops.update(dict.fromkeys(('beq','bne','bhs','blo','bls','bhi','bra'),2))
