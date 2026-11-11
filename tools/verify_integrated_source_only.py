@@ -81,6 +81,27 @@ def main():
         [sys.executable,'-m','unittest','discover','-s',str(REPO/'tests'),'-p','test_ms15_source_final_cleanup.py','-v'],
     ):
         subprocess.run(command,env=os.environ.copy(),cwd=REPO,check=True)
+    # Human-readable audit of suspicious legacy terms in executable source.
+    # A symbol's historical name is not proof of ignition functionality:
+    # record the exact remaining instructions for expert review instead
+    # of blindly deleting useful RPM/fuel-table state.
+    live=[]
+    sensitive=re.compile(
+        r'\b(?:spark\w*|coil\w*|dwell\w*|knock\w*|launch\w*'
+        r'|nitrous\w*|nos\w*|boost\w*|tract\w*|shiftlight\w*'
+        r'|T2SC1|T2CH1\w*)\b',re.I)
+    for n,raw in enumerate(fuel.splitlines(),1):
+        code=raw.split(';',1)[0].strip()
+        if not code or code.startswith('*'):
+            continue
+        if sensitive.search(code):
+            live.append((n,code))
+    print(f'SOURCE AUDIT: {len(live)} active source lines retain historical ignition/racing names')
+    for n,code in live[:120]:
+        print(f'  residual-source:{n}: {code}')
+    if len(live)>120:
+        print(f'  ... {len(live)-120} further references; inspect source, not a pass verdict')
+    print('SOURCE AUDIT NOTE: unused tuning ABI names and fuel-table trigger names may remain')
     print('PASS: full integrated MS1.5 patches + physical source cleanup + matching INI source checks')
     print('SOURCE ONLY: no assembler, no S19, no firmware image, no release or flash')
 
