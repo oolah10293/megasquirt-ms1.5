@@ -409,6 +409,17 @@ MS15_VE3_OFF:
         result=result[:pos]+native_injector_edge(activate,event)+result[pos+len(nop):]
     assert result.count('MS15 injector-event LED fanout')==3
 
+    # CASM08Z found that the injector LED fanout lengthened the existing
+    # firing2 branch past HC08's signed 8-bit relative range. Keep exactly
+    # the same branch condition but use a short inverse branch + absolute JMP.
+    edge_branch=re.compile(r'(?im)^([ \\t]*)brset[ \\t]+firing2,squirt,CHK_DONE_2JMP\\b')
+    replacement=(
+        '        brclr   firing2,squirt,MS15_I2_SKIP'+eol+
+        '        jmp     CHK_DONE_2JMP'+eol+
+        'MS15_I2_SKIP:')
+    result,njump=edge_branch.subn(replacement,result)
+    assert njump==1,('expected one injector-completion long branch',njump)
+
     # New serial-burnable calibration records follow the five existing IAC
     # bytes in page 9; 6 * 7 = 42 bytes, offsets 118..159 (<189).
     # Default: LEDs = Squirt/Warmup/Accel (5/6/7); JS2 fan (4).
