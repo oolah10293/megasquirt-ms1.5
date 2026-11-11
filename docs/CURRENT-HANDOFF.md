@@ -4,6 +4,10 @@ Updated: 2026-11-10. This is a **documentation-only checkpoint**. It does not au
 
 **Read this file, the current Git history, and relevant code before proceeding. Do not rely on conversation memory for the project state.**
 
+## NEW OWNER-REPORTED STIM/ECU BOOT AND TUNERSTUDIO CONNECTION (2026-11-10 local)
+
+Following the flashing instructions for the final fuel-only bench-test image (assembly commit `6c1621e7`), the owner reports: **“the megasquirt is up and running and tunerstudio is connected.”** This is owner-reported actual-device boot and live serial-connection evidence, **not independently verified** by loader output, signature capture, hardware telemetry, or firmware readback. Exact flash image and TS definition are inferred from the immediately preceding instructions and should be confirmed if required. Do not mark injector, idle STEP/DIR, fan, AFR, setting burn, power-cycle reconnection, fault handling, or engine operation as tested. The prior lockout occurred after burn/power cycle; **next low-risk bench test is to power-cycle the Stim/ECU and confirm TunerStudio reconnects without a configuration error**; then explicitly test persistence/burn and outputs in stages. No new source changes or assembly are implied by this report.
+
 ## LATEST AUTHORIZED FINAL FUEL-ONLY TEST BUILD (2026-11-10 local / 2026-11-11 UTC)
 
 **The owner expressly authorized building this final cleaned source** (not flashing or a public release). Exact final dev source was `ms15-ignition-removal` at `91c1defdb4b44a32663a780d5570643141eaf71f`. One atomic commit updated the separate assembler branch `ms15-test-build` to `6c1621e76cc05d96d76ace232292875c6e54abbb`, including all current source and INI finalizers and 9 integrated source tests before CASM08Z. Windows GitHub Actions [run 42946540078](https://github.com/oolah10293/megasquirt-ms1.5/actions/runs/42946540078) **PASS**. CASM08Z assembled with zero errors; five original + nine integrated regression tests and both source/INI checkers PASS. The final INI was built from the final cleanup, not the prior obsolete bench artifact.
