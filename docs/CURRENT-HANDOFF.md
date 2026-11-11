@@ -4,6 +4,12 @@ Updated: 2026-11-10. This is a **documentation-only checkpoint**. It does not au
 
 **Read this file, the current Git history, and relevant code before proceeding. Do not rely on conversation memory for the project state.**
 
+## CONFIRMED BY OWNER: IAC CLOSED-LOOP CONFIGURATION PERSISTED AFTER POWER CYCLE (2026-11-10 local)
+
+The owner followed up after the successful final fuel-only Stim/ECU boot and TunerStudio connection: **“yes it does still show closed loop after a power cycle.”** This explicitly confirms that the displayed IAC **closed-loop enabled** setting persisted through a power cycle, and TunerStudio reconnected without the former MSnS spark-output lockout. These are **owner-observed bench results**; the exact flash-write/burn sequence and whether other page values persisted were not independently captured. It is appropriate to mark the IAC mode's retained setting and normal restart/serial reconnection as owner-verified, **not** physical STEP/DIR movement, homing, rpm/injector timing, fan activation, wideband, or engine safety. A logical next controlled Stim check is STEP/DIR electrical outputs with IAC motor/driver disconnected, followed by safe actuator movement checks only after limits/direction are confirmed.
+
+No new firmware source changes, builds, releases, or deployment are authorized or performed by this documentation update.
+
 ## FOLLOW-UP OWNER-REPORTED POWER-CYCLE / CLOSED-LOOP IAC SETTING (2026-11-10 local)
 
 After confirming the final fuel-only ECU boots and TunerStudio connects on the Stim, the owner reports **two successful power-cycle/reconnection checks**: first, a normal ECU power cycle, and second, changing the IAC setting to **closed loop ON** and cycling power again. The owner says the controller **came back without a problem** in both cases. This is strong owner-reported evidence that the previous MSnS spark-output configuration lockout is not triggered by this IAC setting on restart. This result is **hardware-observed by the owner, not independently reproduced by the assistant**.
