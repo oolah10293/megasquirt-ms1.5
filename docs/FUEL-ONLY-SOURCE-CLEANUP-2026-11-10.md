@@ -42,6 +42,10 @@ Instead, the active `DO_FAN_Check` verifies **fan-on temperature greater than fa
 - Existing VE3 delayed switch: `VE3Timer` is genuinely used by the fuel-table lookup and was deliberately **not** removed alongside the dead spark-table delay.
 - A few historically named ABI-only RAM/flash fields remain for old tune/serial offset compatibility. The previously spark-named `TCSparkCut` live prime counter is now aliased as `MS15_PrimeCount`, using exactly the same RAM byte. The old `NosDcOk` flag still drives *extra-cranking-fuel logic*, and the legacy `NosIn` signal is now used **only as a VE3 fuel-table selector**; neither is nitrous operation. Legacy spark/knock/CLT-angle serial data bytes are initialized to zero to avoid false readings.
 
+## Separate build-only branch integration boundary
+
+The existing Windows CASM08Z driver `tools/windows-test-build.ps1` is present **only on `ms15-test-build`**, not this development branch. The version on that automatic-build branch still applies the earlier removal and INI hiding stages, **not** the new `finalize_ms15_fuel_only.py` and `finalize_ms15_fuel_only_ini.py`. It was deliberately left untouched: pushing source there triggers an automatic build, which is explicitly prohibited in this source-only task. The new non-building reproduction in `tools/verify_integrated_source_only.py` establishes the complete, tested ordering. On **separate future build authorization**, integrate the two finalizers into the authorized Windows build script before producing any S19/INI. Do not use the older artifact in place of that build.
+
 ## Verification evidence / explicit limits
 
 **Verified from GitHub source-only CI:** hash-pinned upstream source, successful application of all three patches, successful ordered transformations, strict preservation of TunerStudio `[Constants]` ABI, existing RAM-alias and ADC-overwrite guards, required output-writer audit, six source-only regression tests on the actual integrated assembly/INI. No dangling symbol references were detected by the regression scan for labels deleted by the cleanup, and tests reject replaying the transform.
