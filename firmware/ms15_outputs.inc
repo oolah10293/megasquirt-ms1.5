@@ -227,7 +227,7 @@ MS15_OUT_ANALOG_SRC:
         blo     MS15_OUT_GET_TPS
         cmp     #9T
         blo     MS15_OUT_GET_MAP
-        lda     batADC
+        lda     batt
         sta     MS15_OUT_VALUE
         jmp     MS15_OUT_THRESH_CHECK
 MS15_OUT_GET_RPM:
@@ -239,7 +239,7 @@ MS15_OUT_GET_CLT:
         sta     MS15_OUT_VALUE
         jmp     MS15_OUT_THRESH_CHECK
 MS15_OUT_GET_TPS:
-        lda     tpsADC
+        lda     tps
         sta     MS15_OUT_VALUE
         jmp     MS15_OUT_THRESH_CHECK
 MS15_OUT_GET_MAP:
