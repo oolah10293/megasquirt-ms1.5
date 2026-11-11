@@ -34,6 +34,13 @@ def transform_integrated(source: str) -> str:
     def block(a: str, b: str, body: str = '', note: str = ''):
         replace(find(a), find(b), body, note or a)
 
+    # Original dwell/spark-time temporary aliases are definitions, not RAM
+    # reservations. With all their computation removed, delete the dead
+    # names instead of retaining misleading active-looking spark symbols.
+    replace(matchline(r'^\s*;misc_spark uses these'),
+            matchline(r'^\s*SparkdltL\s+equ\s+tmp4')+1,
+            '', 'remove dead dwell/spark calculation temp aliases')
+
     # No launch/shift switch pullups. Retain optional VE3 table selector input
     # (historical NOS input pin); it's now fuel table selection only.
     replace(matchline(r'^\s*bset\s+launch,ptdpue'),
@@ -315,9 +322,18 @@ MS15_VE3_OFF:
     result, count = re.subn(r'(?im)^(\s*(?:lda|sta|inc|clr|dec)\s+)TCSparkCut\b',
                             r'\1MS15_PrimeCount', result)
     assert count==5,count
+    # NosDcOk was reused in original 029y4a for *extra cranking fuel*.
+    # Nitrous operation is gone; keep this fuel feature and its precise
+    # flag bit, but stop referencing the stale NOS identifier at runtime.
+    result, count = re.subn(
+        r'(?im)^(\s*(?:brclr|brset|bclr|bset)\s+)NosDcOk(?=,EnhancedBits\b)',
+        r'\1MS15_ExtraCrankGate', result)
+    assert count==5, count
     inc='include "msns-extra.h"'
     assert result.count(inc)==1
-    result=result.replace(inc,inc+eol+'MS15_PrimeCount  equ TCSparkCut ; priming, not ignition')
+    result=result.replace(inc,
+        inc+eol+'MS15_PrimeCount  equ TCSparkCut ; priming, not ignition'
+        +eol+'MS15_ExtraCrankGate equ NosDcOk ; original extra-cranking-fuel flag')
     return result
 
 
