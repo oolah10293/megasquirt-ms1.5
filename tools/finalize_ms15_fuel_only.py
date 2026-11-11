@@ -401,7 +401,7 @@ MS15_VE3_OFF:
     ):
         matches=list(re.finditer(r'(?m)^'+re.escape(label)+r'\s*    # New serial-burnable calibration records follow the five existing IAC
     # bytes in page 9; 6 * 7 = 42 bytes, offsets 118..159 (<189).
-    # Only JS2 (index 3) starts in mode 4 / preserved fan hysteresis.
+    # Defaults: LED17=Squirt (5), LED18=Warmup (6), LED19=Accel (7), JS2=fan (4).
     anchor='ms15_max_lo_f:    db    64T'
     assert result.count(anchor)==1
     records=['; Six programmable output records, page 9 offsets 118..159.']
@@ -409,7 +409,7 @@ MS15_VE3_OFF:
     fields=('mode','src_a','on_a','off_a','src_b','on_b','off_b')
     for n,pin in enumerate(pins):
         for field in fields:
-            val=4 if n==3 and field=='mode' else 0
+            val=(5,6,7,4,0,0)[n] if field=='mode' else 0
             records.append(f'ms15_out{n}_{field}_f: db    {val}T  ; {pin}')
     assert len(records)==43
     result=result.replace(anchor,anchor+eol+eol+eol.join(records))
