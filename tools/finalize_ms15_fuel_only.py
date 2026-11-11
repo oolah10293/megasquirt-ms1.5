@@ -342,6 +342,17 @@ MS15_VE3_OFF:
     result=result.replace(inc,
         inc+eol+'MS15_PrimeCount  equ TCSparkCut ; priming, not ignition'
         +eol+'MS15_ExtraCrankGate equ NosDcOk ; original extra-cranking-fuel flag')
+    # Historical standalone 029y4a cleanup is still a test fixture. It has
+    # no MS1.5 integration patch, IAC state or page-9 extension. Keep that
+    # baseline source transform usable; only attach the new output controller
+    # to the fully integrated MS1.5 firmware.
+    if 'mov     #$01,MS15_STATE' not in result:
+        fan_start=result.index('DO_FAN_Check:')
+        fan_limit=result.index('        lda     EfanOnTemp_f',fan_start)
+        assert 'ms15_out3_mode_f' in result[fan_start:fan_limit]
+        result=result[:fan_start]+'DO_FAN_Check:'+eol+result[fan_limit:]
+        return result
+
     # Use existing, intentionally freed direct-page locations. Explicitly
     # initialize all persistent output state before the first main-loop pass.
     init='mov     #$01,MS15_STATE'
