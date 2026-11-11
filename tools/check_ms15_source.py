@@ -136,6 +136,54 @@ for at, mnemonic, arg in instructions:
         delta = labels[label] - (at + sizes[mnemonic])
         assert -128 <= delta <= 127, (mnemonic, label, delta)
 
+# Additional conservative static check of the entire new output evaluator.
+# This is an instruction-form and *approximate* branch-distance screen, NOT
+# assembler validation. Direct-port owners must be exclusive by construction.
+out_ops=dict.fromkeys(('lda','ldx','sta','cmp','bit','and','ora','clr','inc','mov'),3)
+out_ops.update(dict.fromkeys(('bset','bclr'),2))
+out_ops.update(dict.fromkeys(('brset','brclr','jmp'),3))
+out_ops.update(dict.fromkeys(('beq','bne','bhs','blo','bls','bhi','bra'),2))
+out_ops.update(dict.fromkeys(('clrh','coma','lsla'),1))
+out_labels={}
+out_instructions=[]
+offset=0
+for raw in outputs.splitlines():
+    code=raw.split(';',1)[0].strip()
+    if not code: continue
+    if code.endswith(':'):
+        key=code[:-1].lower()
+        assert key not in out_labels,('duplicate label',key)
+        out_labels[key]=offset
+        continue
+    op,*args=code.split(None,1)
+    op=op.lower()
+    assert op in out_ops,('unsupported HC08 instruction form in output module',code)
+    out_instructions.append((offset,op,args[0] if args else ''))
+    offset+=out_ops[op]
+out_branches={'brset','brclr','beq','bne','bhs','blo','bls','bhi','bra'}
+for at,op,args in out_instructions:
+    if op not in out_branches:continue
+    target=args.split(',')[-1].strip().lower()
+    assert target in out_labels,('undefined output-module branch target',op,target)
+    delta=out_labels[target]-(at+out_ops[op])
+    assert -128<=delta<=127,('relative output branch could exceed range',op,target,delta)
+assert 'ms15_out_next' in out_labels and 'ms15_out_eval' in out_labels
+assert 'ms15_out_advance' in out_labels
+assert re.search(r'(?im)^\s*clrh\b',outputs), 'HX must be cleared before ROM indexed lookup'
+pin_writes=re.findall(
+    r'(?im)^\s*(bset|bclr)\s+(sled|wled|aled|output1|output2|iasc),'
+    r'(portc|porta)\b',outputs)
+for bit,port in (('sled','portc'),('wled','portc'),('aled','portc'),
+                 ('output1','porta'),('output2','porta'),('iasc','porta')):
+    assert sorted(op.lower() for op,b,p in pin_writes
+                  if b.lower()==bit and p.lower()==port)==['bclr','bset'],bit
+assert len(pin_writes)==12,('Unexpected extra output writer',pin_writes)
+assert not re.search(r'(?im)^\s*(bset|bclr)\s+(sled|wled|aled|coila|coilb),portc\b',active),(
+    'The original LED routines still override programmable output pins')
+assert not re.search(r'(?im)^\s*bclr\s+iasc,porta\b',active),(
+    'Legacy PWM idle FIDLE writer was not removed')
+assert 'ms15_out3_mode_f' in active and 'DO_FAN_Check:' in active
+
 print("PASS: source-only pin writers, stepper/output RAM aliases and estimated branch spans")
 print("Output aliases:", {k:hex(addresses[v]) for k,v in output_aliases.items()})
 print("ROM screen:", len(instructions), "IAC instructions;", offset, "estimated bytes (NOT assembled)")
