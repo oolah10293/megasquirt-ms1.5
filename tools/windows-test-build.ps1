@@ -1,4 +1,4 @@
-# Authorized bench-only CASM08Z assembly of FINAL MS1.5 fuel-only source and INI.
+# Authorized CASM08Z assembly of MS1.5 six-output source with matching MS15_002 INI.
 # Runs only on disposable Windows GitHub Actions runner.
 # IMPORTANT: test image is NOT safe to flash or deploy to an engine.
 $ErrorActionPreference = 'Stop'
