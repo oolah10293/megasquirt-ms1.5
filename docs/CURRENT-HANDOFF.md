@@ -4,6 +4,14 @@ Updated: 2026-11-10. This is a **documentation-only checkpoint**. It does not au
 
 **Read this file, the current Git history, and relevant code before proceeding. Do not rely on conversation memory for the project state.**
 
+## LATEST AUTHORIZED FINAL FUEL-ONLY TEST BUILD (2026-11-10 local / 2026-11-11 UTC)
+
+**The owner expressly authorized building this final cleaned source** (not flashing or a public release). Exact final dev source was `ms15-ignition-removal` at `91c1defdb4b44a32663a780d5570643141eaf71f`. One atomic commit updated the separate assembler branch `ms15-test-build` to `6c1621e76cc05d96d76ace232292875c6e54abbb`, including all current source and INI finalizers and 9 integrated source tests before CASM08Z. Windows GitHub Actions [run 42946540078](https://github.com/oolah10293/megasquirt-ms1.5/actions/runs/42946540078) **PASS**. CASM08Z assembled with zero errors; five original + nine integrated regression tests and both source/INI checkers PASS. The final INI was built from the final cleanup, not the prior obsolete bench artifact.
+
+See **[final build report, hashes, vectors and outstanding Stim tests](FUEL-ONLY-FINAL-BUILD-2026-11-10.md)**. New S19 SHA-256 `ac1fab5fb792a166e8972e4f8a61c06d50a065b4fb5d8b3ba6076018967fe7bb`, INI SHA-256 `65640321bb090e19f2d4a583de94525d66fe1a4160d4d905b271932c6481bf84`. Independently inspected the actual artifact: 795 valid S1 records, all 18 vector jump targets, TIM2 Ch1 to RTI dummy, live tach and fuel timer vectors, unchanged calibration/bootloader apart from five intended IAC bytes. Application high-water address `0x9F1D` with 16,610 contiguous addresses free to `0xDFFF`.
+
+**Status: BUILT AND STATIC-CHECKED ONLY. NOT STIM-FLASHED OR ENGINE-VERIFIED.** The owner gave no authorization to flash, release, package an installer or deploy. All older “not yet built” paragraphs below are retained historical snapshots, not current status.
+
 ## FINAL SOURCE-ONLY REFINEMENTS, VERIFIED AGAINST FULL INTEGRATION (2026-11-10 local / 2026-11-11 UTC)
 
 **Most recent source/test commit:** `a692d559259aabbbd8856651a4ef38f74d065f91` on `ms15-ignition-removal`. **Source-only CI run [42944883755](https://github.com/oolah10293/megasquirt-ms1.5/actions/runs/42944883755) passed:** upstream archive pinned by SHA, all three real integration patches, two ignition/racing source cleanup transforms, two INI transforms, original source/tuning checkers, and **9 actual integrated-source regression tests**. This was a Linux source-only workflow; it did NOT invoke an assembler, generate an S19/INI image artifact, flash, or deploy anything.
