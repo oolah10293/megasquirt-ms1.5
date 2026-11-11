@@ -95,7 +95,7 @@ class FinalSourceOnly(unittest.TestCase):
                           r'^\s*lda\s+Spark2Delay_f\b',
                           r'^\s*sta\s+ST2Timer\b',
                           r'^\s*sthx\s+dwelldelay[1-6]\b',
-                          r'^\s*sta\s+(?:NosPW|NitrousAngle|KnockAngle)\b'):
+                          r'^\s*sta\s+(?:NosPW|NitrousAngle)\b'):
             self.assertNotRegex(a,r'(?im)'+forbidden,forbidden)
         # VE3 is a FUEL-table switch, not a spark-table switch. Its delay
         # is still used by VE3_Table and deliberately retained.
@@ -104,6 +104,9 @@ class FinalSourceOnly(unittest.TestCase):
             self.assertRegex(a,r'(?i)\b'+token+r'\b')
         self.assertRegex(a,r'(?im)^MS15_PrimeCount\s+equ\s+TCSparkCut\b')
         self.assertNotRegex(a,r'(?im)^\s*(?:lda|sta|inc|clr|dec)\s+TCSparkCut\b')
+        # Retain fixed-zero old telemetry slots without any live ignition code.
+        for old in ('SparkAngle','KnockAngle','CltIatAngle'):
+            self.assertRegex(a,r'(?im)^\s*sta\s+'+old+r'\b')
 
     def test_no_dangling_original_labels(self):
         prior=symbols(self.full)
