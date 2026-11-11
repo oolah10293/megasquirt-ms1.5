@@ -108,6 +108,39 @@ class FinalSourceOnly(unittest.TestCase):
         for old in ('SparkAngle','KnockAngle','CltIatAngle'):
             self.assertRegex(a,r'(?im)^\s*sta\s+'+old+r'\b')
 
+    def test_ve3_disable_clears_latched_fuel_table_selection(self):
+        # If a tune disables VE3 after an input previously selected it,
+        # stale UseVE3 must not keep changing which fuel/AFR map is active.
+        for body in (self.cleaned, self.integrated):
+            if body is None: continue
+            src=cleaned_source(body)
+            self.assertRegex(
+                src,
+                r'(?is)Prime_Checked:\s+lda\s+feature6_f\s+bit\s+#VETable3b'
+                r'\s+bne\s+MS15_CHECK_VE3_OPTION\s+bclr\s+UseVE3,EnhancedBits'
+                r'\s+bra\s+No_VE_Table_3\s+MS15_CHECK_VE3_OPTION:'
+                r'\s+jsr\s+Check_VE3_Table')
+            # Physical table switch input retains fuel-only selection role.
+            self.assertRegex(src, r'(?i)Check_VE3_Table:\s+brset\s+NosIn,portd,MS15_VE3_OFF')
+
+    def test_help_excludes_retired_ignition_and_racing_features(self):
+        if not INTEGRATED_INI:
+            self.skipTest('Requires the integrated, matching TunerStudio INI')
+        ini=self.integrated_ini
+        for retired in ('Fhelp4','Fhelp5','Shelp1','Shelp2','Shelp3','Shelp4',
+                        'Shelp5','Chelp1','Chelp4','Chelp5','TachoHelp',
+                        'DwellHelp','Stim4WHelp'):
+            self.assertNotRegex(ini,rf'(?im)^\s*help\s*=\s*{retired}\s*,')
+            self.assertNotRegex(ini,rf'(?im)^\s*subMenu\s*=\s*{retired}\b')
+        for token in ('help = Fhelp1, "MegaSquirt MS1.5 Fuel-Only"',
+                      'help = Fhelp2, "Fuel Table Selection"',
+                      'help = Fhelp7, "Fuel Rev Limiter"',
+                      'help = Chelp2, "Advanced Fuel Configuration"'):
+            self.assertIn(token,ini)
+        # Help must describe actual fuel-only rev limiting and VE3 operation.
+        self.assertIn('soft delay counts in 0.1 second ticks',ini.lower())
+        self.assertIn('table-select input goes low',ini)
+
     def test_no_dangling_original_labels(self):
         prior=symbols(self.full)
         deleted=prior-symbols(self.cleaned)
