@@ -45,13 +45,19 @@ def transform_integrated(source: str) -> str:
     replace(matchline(r'^\s*brset\s+out3sparkd,feature2,w_no3'),
             find('w_no3')+1,'','delete last spark-only output3 initializer')
     obsolete_boot = ('splitdelH','splitdelL','KnockAngleRet','KnockAdv',
-        'KnockTimLft','KnockAngle','TCAngle','KnockBoost','CltIatAngle',
+        'KnockTimLft','TCAngle','KnockBoost',
         'N2Olaunchdel','NitrousAngle','NosPW')
     for symbol in obsolete_boot:
         found=[i for i,l in enumerate(lines[:find('chk_out')])
                if re.match(r'^\s*sta\s+'+symbol+r'\s*(?:;.*)?$',l,re.I)]
         assert len(found)==1,(symbol,found)
         replace(found[0],found[0]+1,'','remove unused startup '+symbol)
+    # Existing serial schema contains three former ignition-display bytes;
+    # keep clearing the old KnockAngle/CltIatAngle fields at startup, and
+    # initialize SparkAngle to zero so no stale uninitialized telemetry leaks.
+    c=matchline(r'^\s*sta\s+iTimepL\s*$')
+    replace(c,c+1,lines[c]+'        sta     SparkAngle    ; legacy serial placeholder'+eol,
+            'zero obsolete spark display field without any ignition control')
     for n in range(1,7):
         i=matchline(r'^\s*sthx\s+dwelldelay'+str(n)+r'\s*$')
         replace(i,i+1,'','delete unused ignition dwell RAM init')
