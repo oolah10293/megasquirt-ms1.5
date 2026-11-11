@@ -249,7 +249,7 @@ class FinalSourceOnly(unittest.TestCase):
         self.assertRegex(a,r'(?im)^\s*bset\s+config_error,feature2\b')
         for marker in ('subMenu = idleControl','subMenu = ms15FanControl','subMenu = veTable1Tbl','subMenu = veTable2Tbl','subMenu = afrTable1Tbl','subMenu = afrTable2Tbl','subMenu = RevLimiterS'):
             self.assertIn(marker,ini,marker)
-        self.assertIn('MS1/Extra format MS15_001 ******',ini)
+        self.assertIn('MS1/Extra format MS15_002 ******',ini)
         for forbidden in ('dialog = sparkSettings,','dialog = knock,','dialog = NosSystem,','dialog = launchSettings,','dialog = boostControl,'):
             self.assertNotIn(forbidden,ini)
         self.assertIn('Table-select input low',ini)
