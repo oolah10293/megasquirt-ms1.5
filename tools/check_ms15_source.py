@@ -19,6 +19,7 @@ asm = (src / "msns-extra.asm").read_text(errors="replace")
 header = (src / "msns-extra.h").read_text(errors="replace")
 defs = (src / "ms15_defs.inc").read_text(errors="replace")
 iac = (src / "ms15_iac.inc").read_text(errors="replace")
+outputs = (src / "ms15_outputs.inc").read_text(errors="replace")
 
 # Account for every DS byte, including unlabeled continuation declarations.
 ram, addresses = 0x40, {}
@@ -44,6 +45,22 @@ for row in defs.splitlines():
         assert not re.search(r"\b" + re.escape(old) + r"\b", active, re.I), (symbol, "legacy reference remains")
         aliases[symbol] = old
 assert len(aliases) == 8 and len(set(aliases.values())) == 8
+output_aliases={}
+for row in defs.splitlines():
+    match=re.match(r'\s*(MS15_OUT_\w+)\s+equ\s+(\w+)',row,re.I)
+    if not match: continue
+    symbol,old=match.group(1),match.group(2).lower()
+    assert old in addresses and addresses[old]<=0xFF,(symbol,old)
+    assert not re.search(r'\b'+re.escape(old)+r'\b',active,re.I),(
+        symbol,'legacy RAM owner still writes/reads',old)
+    output_aliases[symbol]=old
+assert len(output_aliases)==16,output_aliases
+assert len(set(output_aliases.values()))==16
+assert set(output_aliases.values()).isdisjoint(aliases.values())
+assert 'MS15_OUTPUT_SERVICE:' in outputs
+assert 'include "ms15_outputs.inc"' in iac
+assert 'MS15_IAC_CONTINUE:' in iac
+assert 'inc     MS15_OUT_CLOCK' in asm
 
 # ADC history is an indexed array: sta lmap,x writes lmat..lego without
 # naming those symbols. These five bytes belong to MS1.5 only after that
@@ -105,6 +122,8 @@ for row in iac.splitlines():
         continue
     mnemonic, *other = line.split(None, 1)
     mnemonic = mnemonic.lower()
+    if mnemonic == "include" and '"ms15_outputs.inc"' in line:
+        continue
     assert mnemonic in sizes, ("unexpected instruction", line)
     arg = other[0] if other else ""
     instructions.append((offset, mnemonic, arg))
@@ -117,7 +136,8 @@ for at, mnemonic, arg in instructions:
         delta = labels[label] - (at + sizes[mnemonic])
         assert -128 <= delta <= 127, (mnemonic, label, delta)
 
-print("PASS: source-only pin writers, RAM aliases and estimated branch spans")
+print("PASS: source-only pin writers, stepper/output RAM aliases and estimated branch spans")
+print("Output aliases:", {k:hex(addresses[v]) for k,v in output_aliases.items()})
 print("ROM screen:", len(instructions), "IAC instructions;", offset, "estimated bytes (NOT assembled)")
 print("State locations:", {name:hex(addresses[old]) for name,old in aliases.items()})
 print("NOT TESTED: assembly, map/ROM limits, stack, motor behavior, injector jitter, safety.")
