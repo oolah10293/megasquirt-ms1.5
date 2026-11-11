@@ -229,9 +229,10 @@ class FinalSourceOnly(unittest.TestCase):
                     r'(?is)lda\s+ms15_out'+str(idx)+r'_mode_f\s+'
                     r'cmp\s+#5T\s+bne\s+IL_'+event+'_'+str(idx)+r'\s+'
                     +instruction+r'\s+'+pin+r',portc\s+IL_'+event+'_'+str(idx)+r':')
+        handlers=module.split('; Fast native Squirt LED handlers',1)[1]
         for pin in ('sled','wled','aled'):
-            self.assertEqual(len(re.findall(r'(?im)^\s*bset\s+'+pin+r',portc\b',module)),2)
-            self.assertEqual(len(re.findall(r'(?im)^\s*bclr\s+'+pin+r',portc\b',module)),1)
+            self.assertEqual(len(re.findall(r'(?im)^\s*bset\s+'+pin+r',portc\b',handlers)),2)
+            self.assertEqual(len(re.findall(r'(?im)^\s*bclr\s+'+pin+r',portc\b',handlers)),1)
 
     def test_all_remaining_legacy_runtime_identifiers_are_accounted_for(self):
         # Audit the *entire integrated* assembly, not a handful of snippets.
